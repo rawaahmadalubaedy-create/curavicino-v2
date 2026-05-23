@@ -1,0 +1,26 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "fj5uAhnVwMPMrIn_S38-_"
+uri = "file://artifacts/mobile/assets/images/icon.png"
+type = "image"
+title = "curavicino app icon"
+
+[[generated]]
+id = "D3UzwEycGtR-HjT4hbUTi"
+uri = "file://artifacts/mobile/assets/images/elderly_care.png"
+type = "image"
+title = "elderly care nurse"
+
+[[generated]]
+id = "cRI-TGPLTU2COZbiATf2-"
+uri = "file://artifacts/mobile/assets/images/delivery.png"
+type = "image"
+title = "delivery rider pharmacy"
+
+[[generated]]
+id = "3EPkrS96wBClAaM2audWu"
+uri = "file://artifacts/mobile/assets/images/home_services.png"
+type = "image"
+title = "home services collage"
