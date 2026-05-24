@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 
 import { AuthService, ApiUser } from "@/services/auth";
 import { TokenStore } from "@/services/api";
+import { realtimeClient } from "@/services/realtime";
 
 /* ─── Types ─────────────────────────────────────────────────────────────────── */
 export type UserType = "customer" | "provider" | null;
@@ -111,6 +112,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const u = apiUserToUser(fresh);
             setUser(u);
             await AsyncStorage.setItem(USER_KEY, JSON.stringify(u));
+            /* Re-establish WS connection after app restart */
+            realtimeClient.connect().catch(() => {});
           } catch {
             /* Token invalid — clear it but keep cached user for UX */
             await TokenStore.clear();
@@ -134,6 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const apiUser = await AuthService.login(email, password);
       await saveUser(apiUserToUser(apiUser));
+      realtimeClient.connect().catch(() => {});
     } catch (err: any) {
       /* If API unreachable (network error), fall back to demo mode */
       if (!err?.status) {
@@ -156,6 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         phone: "+39 348 123 4567",
       });
       await saveUser(apiUserToUser(apiUser));
+      realtimeClient.connect().catch(() => {});
     } catch {
       await saveUser(mockUser({ fullName: "Marco Bianchi", email, userType: "customer" }));
     }
@@ -171,6 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         phone: "+39 340 987 6543",
       });
       await saveUser(apiUserToUser(apiUser));
+      realtimeClient.connect().catch(() => {});
     } catch {
       await saveUser(mockUser({ fullName: "Giulia Ferrari", email, userType: "customer" }));
     }
@@ -186,6 +192,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         phone,
       });
       await saveUser(apiUserToUser(apiUser));
+      realtimeClient.connect().catch(() => {});
     } catch {
       await saveUser(mockUser({ fullName: "Luca Verdi", phone, userType: "customer" }));
     }
@@ -204,6 +211,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         forFamilyMember: data.forFamilyMember,
       });
       await saveUser(apiUserToUser(apiUser));
+      realtimeClient.connect().catch(() => {});
     } catch (err: any) {
       if (!err?.status) {
         /* Network error → offline demo */
@@ -226,6 +234,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const u = apiUserToUser(apiUser);
       u.qrCode = generateId();
       await saveUser(u);
+      realtimeClient.connect().catch(() => {});
     } catch (err: any) {
       if (!err?.status) {
         await saveUser(
@@ -239,6 +248,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   /* ── Logout ──────────────────────────────────────────────────────────────────── */
   const logout = async () => {
+    realtimeClient.disconnect();
     await AuthService.logout();
     setUser(null);
     await AsyncStorage.removeItem(USER_KEY);

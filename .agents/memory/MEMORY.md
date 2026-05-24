@@ -1,2 +1,3 @@
 - [CuraVicino Mobile Stack](curavicino-stack.md) — Expo ~54, expo-router ~6, pnpm workspace, Italian care app; key architecture decisions.
 - [CuraVicino Backend Integration](curavicino-backend.md) — JWT auth, Drizzle ORM, Express API; mobile service layer pattern and gotchas.
+- [WebSocket realtime architecture](realtime-architecture.md) — WS server at /api/ws, JWT token in query-string, singleton on both server and mobile; BookingContext subscribes via realtimeClient singleton directly (not via RealtimeContext, since BookingProvider is a parent of RealtimeProvider in the tree).

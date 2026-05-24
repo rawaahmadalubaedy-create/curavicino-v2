@@ -4,6 +4,7 @@ import { db, bookingsTable, reviewsTable, providersTable, notificationsTable } f
 import { eq, and } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import { generateId } from "../lib/id";
+import { realtime } from "../lib/realtime";
 
 const router = Router();
 
@@ -58,7 +59,6 @@ router.get("/bookings/:id", requireAuth, async (req, res) => {
       return;
     }
 
-    /* Fetch review if it exists */
     const [review] = await db
       .select()
       .from(reviewsTable)
@@ -106,9 +106,10 @@ router.post("/bookings", requireAuth, async (req, res) => {
       })
       .returning();
 
-    /* Create a booking confirmation notification */
+    /* Booking-confirmation notification */
+    const notifId = generateId();
     await db.insert(notificationsTable).values({
-      id: generateId(),
+      id: notifId,
       userId,
       title: "Booking Confirmed",
       message: `Your booking for ${data.service} with ${data.providerName} has been confirmed.`,
@@ -116,7 +117,32 @@ router.post("/bookings", requireAuth, async (req, res) => {
       read: false,
     });
 
-    res.status(201).json(bookingToDto(booking));
+    const dto = bookingToDto(booking);
+
+    /* Real-time: notify customer */
+    realtime.emitToUser(userId, {
+      type: "booking_update",
+      data: { ...dto, event: "created" },
+    });
+    realtime.emitToUser(userId, {
+      type: "new_notification",
+      data: {
+        id: notifId,
+        title: "Booking Confirmed",
+        message: dto.service + " with " + dto.providerName,
+        type: "booking",
+        read: false,
+        time: new Date().toISOString(),
+      },
+    });
+
+    /* Real-time: also notify the provider (if online) */
+    realtime.emitToUser(data.providerId, {
+      type: "booking_update",
+      data: { ...dto, event: "new_booking" },
+    });
+
+    res.status(201).json(dto);
   } catch (err) {
     req.log?.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -152,7 +178,33 @@ router.patch("/bookings/:id/status", requireAuth, async (req, res) => {
       .where(eq(bookingsTable.id, bookingId))
       .returning();
 
-    res.json(bookingToDto(updated));
+    const dto = bookingToDto(updated);
+
+    /* Map status to a descriptive real-time event type */
+    const eventTypeMap: Record<string, "booking_update" | "service_started" | "service_completed"> = {
+      active: "service_started",
+      completed: "service_completed",
+      cancelled: "booking_update",
+      pending: "booking_update",
+    };
+    const evType = eventTypeMap[status] ?? "booking_update";
+
+    realtime.emitToUser(userId, { type: evType, data: { ...dto, event: status } });
+
+    /* Wallet debit event on completion */
+    if (status === "completed") {
+      realtime.emitToUser(userId, {
+        type: "wallet_update",
+        data: {
+          type: "debit",
+          amount: row.totalCost,
+          description: `Payment for ${row.service}`,
+          bookingId: row.id,
+        },
+      });
+    }
+
+    res.json(dto);
   } catch (err) {
     req.log?.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -186,7 +238,6 @@ router.post("/bookings/:id/review", requireAuth, async (req, res) => {
       return;
     }
 
-    /* Check duplicate */
     const [existing] = await db
       .select({ id: reviewsTable.id })
       .from(reviewsTable)
@@ -225,6 +276,55 @@ router.post("/bookings/:id/review", requireAuth, async (req, res) => {
       .where(eq(providersTable.id, booking.providerId));
 
     res.status(201).json(review);
+  } catch (err) {
+    req.log?.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/* POST /api/bookings/:id/arrived — provider signals arrival */
+router.post("/bookings/:id/arrived", requireAuth, async (req, res) => {
+  try {
+    const bookingId = String(req.params.id);
+    const [booking] = await db
+      .select()
+      .from(bookingsTable)
+      .where(eq(bookingsTable.id, bookingId))
+      .limit(1);
+
+    if (!booking) {
+      res.status(404).json({ error: "Booking not found" });
+      return;
+    }
+
+    /* Notify the customer */
+    const notifId = generateId();
+    await db.insert(notificationsTable).values({
+      id: notifId,
+      userId: booking.customerId,
+      title: "Provider Arrived",
+      message: `${booking.providerName} has arrived at your location.`,
+      type: "provider",
+      read: false,
+    });
+
+    realtime.emitToUser(booking.customerId, {
+      type: "provider_arrived",
+      data: { bookingId, providerName: booking.providerName },
+    });
+    realtime.emitToUser(booking.customerId, {
+      type: "new_notification",
+      data: {
+        id: notifId,
+        title: "Provider Arrived",
+        message: `${booking.providerName} has arrived.`,
+        type: "provider",
+        read: false,
+        time: new Date().toISOString(),
+      },
+    });
+
+    res.json({ ok: true });
   } catch (err) {
     req.log?.error(err);
     res.status(500).json({ error: "Internal server error" });

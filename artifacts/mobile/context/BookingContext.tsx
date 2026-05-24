@@ -5,6 +5,7 @@ import { TokenStore } from "@/services/api";
 import { BookingsService } from "@/services/bookings";
 import { NotificationsService } from "@/services/notifications";
 import { ProvidersService } from "@/services/providers";
+import { realtimeClient } from "@/services/realtime";
 
 export type BookingStatus = "pending" | "active" | "completed" | "cancelled";
 export type CategoryType = "elderly-care" | "delivery" | "home-services";
@@ -276,6 +277,79 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
     loadFromApi();
     // Also seed providers in case DB is fresh (idempotent)
     ProvidersService.seed().catch(() => {});
+  }, []);
+
+  /* ── Realtime event subscriptions ─────────────────────────────────────────── */
+  useEffect(() => {
+    const unsubs: Array<() => void> = [];
+
+    /* booking_update / service_started / service_completed / provider_arrived */
+    const handleBookingEvent = (raw: unknown) => {
+      const data = raw as {
+        id?: string;
+        status?: BookingStatus;
+        event?: string;
+        [k: string]: unknown;
+      } | null;
+      if (!data?.id) return;
+
+      setBookings((prev) => {
+        const exists = prev.some((b) => b.id === data.id);
+        if (!exists) {
+          // New booking created (e.g. provider view) — just prepend minimal stub
+          return prev;
+        }
+        const updated = prev.map((b) =>
+          b.id === data.id
+            ? { ...b, ...(data.status ? { status: data.status } : {}) }
+            : b
+        );
+        AsyncStorage.setItem(CACHE_BOOKINGS, JSON.stringify(updated)).catch(() => {});
+        return updated;
+      });
+    };
+
+    unsubs.push(realtimeClient.on("booking_update", handleBookingEvent));
+    unsubs.push(realtimeClient.on("service_started", handleBookingEvent));
+    unsubs.push(realtimeClient.on("service_completed", handleBookingEvent));
+    unsubs.push(realtimeClient.on("provider_arrived", handleBookingEvent));
+
+    /* new_notification */
+    unsubs.push(
+      realtimeClient.on("new_notification", (raw) => {
+        const data = raw as {
+          id?: string;
+          title?: string;
+          message?: string;
+          type?: Notification["type"];
+          read?: boolean;
+          time?: string;
+        } | null;
+        if (!data?.id || !data.title) return;
+
+        setNotifications((prev) => {
+          // Avoid duplicates
+          if (prev.some((n) => n.id === data.id)) return prev;
+          const notif: Notification = {
+            id: data.id!,
+            title: data.title!,
+            message: data.message ?? "",
+            type: data.type ?? "system",
+            read: data.read ?? false,
+            time: data.time
+              ? new Date(data.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+              : "Just now",
+          };
+          const updated = [notif, ...prev];
+          AsyncStorage.setItem(CACHE_NOTIFS, JSON.stringify(updated)).catch(() => {});
+          return updated;
+        });
+      })
+    );
+
+    return () => {
+      for (const fn of unsubs) fn();
+    };
   }, []);
 
   async function loadFromCache() {

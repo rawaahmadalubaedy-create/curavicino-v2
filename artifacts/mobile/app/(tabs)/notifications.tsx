@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Notification, useBooking } from "@/context/BookingContext";
+import { useRealtime } from "@/context/RealtimeContext";
 import { useLang } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
 
@@ -19,7 +20,15 @@ export default function NotificationsScreen() {
   const { t } = useLang();
   const insets = useSafeAreaInsets();
   const { notifications, markNotificationRead } = useBooking();
+  const { status: wsStatus } = useRealtime();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
+
+  const statusColor =
+    wsStatus === "connected"
+      ? "#00a651"
+      : wsStatus === "connecting"
+      ? "#f0a500"
+      : "#CE2B37";
 
   const typeIcon = (type: Notification["type"]) => {
     if (type === "booking") return "calendar";
@@ -37,6 +46,7 @@ export default function NotificationsScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.darkText }]}>{t("notifications")}</Text>
+        <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
       </View>
 
       <FlatList
@@ -118,4 +128,5 @@ const styles = StyleSheet.create({
   empty: { alignItems: "center", paddingTop: 80 },
   emptyIcon: { width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center", marginBottom: 16 },
   emptyTitle: { fontSize: 18, fontFamily: "Inter_700Bold" },
+  statusDot: { width: 8, height: 8, borderRadius: 4, marginLeft: 8, alignSelf: "center" },
 });

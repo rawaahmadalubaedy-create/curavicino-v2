@@ -4,6 +4,7 @@ import { db, messagesTable } from "@workspace/db";
 import { eq, or, and } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import { generateId } from "../lib/id";
+import { realtime } from "../lib/realtime";
 
 const router = Router();
 
@@ -77,7 +78,7 @@ router.post("/messages", requireAuth, async (req, res) => {
       })
       .returning();
 
-    res.status(201).json({
+    const dto = {
       id: message.id,
       senderId: message.senderId,
       receiverId: message.receiverId,
@@ -85,7 +86,15 @@ router.post("/messages", requireAuth, async (req, res) => {
       content: message.content,
       read: message.read,
       createdAt: message.createdAt.toISOString(),
+    };
+
+    /* Real-time: notify both sender (echo) and receiver */
+    realtime.emitToUsers([userId, data.receiverId], {
+      type: "new_message",
+      data: dto,
     });
+
+    res.status(201).json(dto);
   } catch (err) {
     req.log?.error(err);
     res.status(500).json({ error: "Internal server error" });

@@ -2,6 +2,8 @@ import { Router } from "express";
 import { db, notificationsTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
+import { realtime } from "../lib/realtime";
+import { generateId } from "../lib/id";
 
 const router = Router();
 
@@ -72,6 +74,38 @@ router.patch("/notifications/read-all", requireAuth, async (req, res) => {
       .set({ read: true })
       .where(eq(notificationsTable.userId, userId));
     res.json({ ok: true });
+  } catch (err) {
+    req.log?.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/* POST /api/notifications — internal: push a notification to a user (admin/system) */
+router.post("/notifications", requireAuth, async (req, res) => {
+  const { targetUserId, title, message, type } = req.body ?? {};
+  if (!targetUserId || !title || !message) {
+    res.status(400).json({ error: "targetUserId, title, message required" });
+    return;
+  }
+
+  try {
+    const id = generateId();
+    await db.insert(notificationsTable).values({
+      id,
+      userId: targetUserId,
+      title,
+      message,
+      type: type ?? "system",
+      read: false,
+    });
+
+    /* Push real-time */
+    realtime.emitToUser(targetUserId, {
+      type: "new_notification",
+      data: { id, title, message, type: type ?? "system", read: false, time: new Date().toISOString() },
+    });
+
+    res.status(201).json({ id });
   } catch (err) {
     req.log?.error(err);
     res.status(500).json({ error: "Internal server error" });

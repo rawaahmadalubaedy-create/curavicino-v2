@@ -15,6 +15,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider } from "@/context/AuthContext";
 import { BookingProvider } from "@/context/BookingContext";
 import { LanguageProvider } from "@/context/LanguageContext";
+import { RealtimeProvider } from "@/context/RealtimeContext";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -43,27 +44,29 @@ export default function RootLayout() {
           <LanguageProvider>
             <AuthProvider>
               <BookingProvider>
-                <Stack screenOptions={{ headerShown: false }}>
-                  <Stack.Screen name="index" />
-                  <Stack.Screen name="(tabs)" />
-                  <Stack.Screen name="auth/login" />
-                  <Stack.Screen name="auth/register-type" />
-                  <Stack.Screen name="auth/customer-register" />
-                  <Stack.Screen name="auth/provider-register" />
-                  <Stack.Screen name="services/[category]" />
-                  <Stack.Screen
-                    name="provider/[id]"
-                    options={{
-                      animation: "slide_from_right",
-                    }}
-                  />
-                  <Stack.Screen name="booking/[id]" />
-                  <Stack.Screen name="tracking/[id]" />
-                  <Stack.Screen name="support" />
-                  <Stack.Screen name="complaints" />
-                  <Stack.Screen name="terms" />
-                  <Stack.Screen name="qr-code" />
-                </Stack>
+                <RealtimeProvider>
+                  <Stack screenOptions={{ headerShown: false }}>
+                    <Stack.Screen name="index" />
+                    <Stack.Screen name="(tabs)" />
+                    <Stack.Screen name="auth/login" />
+                    <Stack.Screen name="auth/register-type" />
+                    <Stack.Screen name="auth/customer-register" />
+                    <Stack.Screen name="auth/provider-register" />
+                    <Stack.Screen name="services/[category]" />
+                    <Stack.Screen
+                      name="provider/[id]"
+                      options={{
+                        animation: "slide_from_right",
+                      }}
+                    />
+                    <Stack.Screen name="booking/[id]" />
+                    <Stack.Screen name="tracking/[id]" />
+                    <Stack.Screen name="support" />
+                    <Stack.Screen name="complaints" />
+                    <Stack.Screen name="terms" />
+                    <Stack.Screen name="qr-code" />
+                  </Stack>
+                </RealtimeProvider>
               </BookingProvider>
             </AuthProvider>
           </LanguageProvider>
