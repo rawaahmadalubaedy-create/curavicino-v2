@@ -1,0 +1,1 @@
+- [CuraVicino Mobile Stack](curavicino-stack.md) — Expo ~54, expo-router ~6, pnpm workspace, Italian care app; key architecture decisions.

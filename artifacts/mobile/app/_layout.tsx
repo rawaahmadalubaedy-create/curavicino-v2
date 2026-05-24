@@ -10,10 +10,8 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/context/AuthContext";
 import { BookingProvider } from "@/context/BookingContext";
 import { LanguageProvider } from "@/context/LanguageContext";
@@ -21,25 +19,6 @@ import { LanguageProvider } from "@/context/LanguageContext";
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
-
-function RootLayoutNav() {
-  return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="auth/login" />
-      <Stack.Screen name="auth/register-type" />
-      <Stack.Screen name="auth/customer-register" />
-      <Stack.Screen name="auth/provider-register" />
-      <Stack.Screen name="services/[category]" />
-      <Stack.Screen name="booking/[id]" />
-      <Stack.Screen name="tracking/[id]" />
-      <Stack.Screen name="support" />
-      <Stack.Screen name="complaints" />
-      <Stack.Screen name="terms" />
-    </Stack>
-  );
-}
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
@@ -59,21 +38,37 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <ErrorBoundary>
-        <QueryClientProvider client={queryClient}>
-          <GestureHandlerRootView style={{ flex: 1 }}>
-            <KeyboardProvider>
-              <LanguageProvider>
-                <AuthProvider>
-                  <BookingProvider>
-                    <RootLayoutNav />
-                  </BookingProvider>
-                </AuthProvider>
-              </LanguageProvider>
-            </KeyboardProvider>
-          </GestureHandlerRootView>
-        </QueryClientProvider>
-      </ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <LanguageProvider>
+            <AuthProvider>
+              <BookingProvider>
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="index" />
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen name="auth/login" />
+                  <Stack.Screen name="auth/register-type" />
+                  <Stack.Screen name="auth/customer-register" />
+                  <Stack.Screen name="auth/provider-register" />
+                  <Stack.Screen name="services/[category]" />
+                  <Stack.Screen
+                    name="provider/[id]"
+                    options={{
+                      animation: "slide_from_right",
+                    }}
+                  />
+                  <Stack.Screen name="booking/[id]" />
+                  <Stack.Screen name="tracking/[id]" />
+                  <Stack.Screen name="support" />
+                  <Stack.Screen name="complaints" />
+                  <Stack.Screen name="terms" />
+                  <Stack.Screen name="qr-code" />
+                </Stack>
+              </BookingProvider>
+            </AuthProvider>
+          </LanguageProvider>
+        </GestureHandlerRootView>
+      </QueryClientProvider>
     </SafeAreaProvider>
   );
 }
