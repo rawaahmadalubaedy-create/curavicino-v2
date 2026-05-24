@@ -105,7 +105,7 @@ export default function ProviderProfileScreen() {
 
   const availColor = AVAIL_COLOR[provider.availabilityStatus];
 
-  const handleBook = () => {
+  const handleBook = async () => {
     if (!selectedService) {
       Alert.alert("", "Please select a service.");
       return;
@@ -122,7 +122,7 @@ export default function ProviderProfileScreen() {
       totalCost: provider.pricePerHour * 2,
       notes,
     };
-    addBooking(booking);
+    await addBooking(booking);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setBookingModal(false);
     Alert.alert("Booking Confirmed", `Your booking with ${provider.name} has been confirmed.`, [

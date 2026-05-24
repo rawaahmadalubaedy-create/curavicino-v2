@@ -97,7 +97,7 @@ export default function CategoryScreen() {
     setBookingProvider(provider);
   };
 
-  const confirmBooking = () => {
+  const confirmBooking = async () => {
     if (!bookingProvider || !selectedService) return;
     const booking: Omit<Booking, "id"> = {
       providerId: bookingProvider.id,
@@ -111,7 +111,7 @@ export default function CategoryScreen() {
       totalCost: bookingProvider.pricePerHour * 2,
       notes,
     };
-    addBooking(booking);
+    await addBooking(booking);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setBookingProvider(null);
     setNotes("");

@@ -24,7 +24,7 @@ export default function BookingDetailScreen() {
   const colors = useColors();
   const { t } = useLang();
   const insets = useSafeAreaInsets();
-  const { bookings, updateBooking } = useBooking();
+  const { bookings, updateBooking, submitReview } = useBooking();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
   const booking = bookings.find((b) => b.id === id);
@@ -53,8 +53,8 @@ export default function BookingDetailScreen() {
       {
         text: t("confirm"),
         style: "destructive",
-        onPress: () => {
-          updateBooking(booking.id, { status: "cancelled" });
+        onPress: async () => {
+          await updateBooking(booking.id, { status: "cancelled" });
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
           router.back();
         },
@@ -62,12 +62,12 @@ export default function BookingDetailScreen() {
     ]);
   };
 
-  const handleReview = () => {
+  const handleReview = async () => {
     if (rating === 0) {
       Alert.alert("", "Please select a rating.");
       return;
     }
-    updateBooking(booking.id, { rating, review: reviewText });
+    await submitReview(booking.id, rating, reviewText);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setShowReview(false);
     Alert.alert("", t("reviewSubmitted"));

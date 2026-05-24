@@ -1,6 +1,11 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
+import { TokenStore } from "@/services/api";
+import { BookingsService } from "@/services/bookings";
+import { NotificationsService } from "@/services/notifications";
+import { ProvidersService } from "@/services/providers";
+
 export type BookingStatus = "pending" | "active" | "completed" | "cancelled";
 export type CategoryType = "elderly-care" | "delivery" | "home-services";
 export type AvailabilityStatus = "available" | "busy" | "offline";
@@ -67,379 +72,304 @@ export interface Notification {
 interface BookingContextType {
   bookings: Booking[];
   notifications: Notification[];
-  addBooking: (b: Omit<Booking, "id">) => void;
-  updateBooking: (id: string, data: Partial<Booking>) => void;
+  addBooking: (b: Omit<Booking, "id">) => Promise<void>;
+  updateBooking: (id: string, data: Partial<Booking>) => Promise<void>;
   markNotificationRead: (id: string) => void;
+  markAllNotificationsRead: () => void;
+  submitReview: (bookingId: string, rating: number, text: string, customerName?: string) => Promise<void>;
+  refreshBookings: () => Promise<void>;
+  refreshNotifications: () => Promise<void>;
   unreadCount: number;
 }
 
-const MOCK_PROVIDERS: Provider[] = [
+/* ─── Static provider data (offline-safe, used by profile screens) ───────────── */
+const STATIC_PROVIDERS: Provider[] = [
   {
     id: "p1",
     name: "Sofia Martinelli",
     rating: 4.9,
-    reviews: 124,
-    experience: "8 years",
-    pricePerHour: 18,
+    reviews: 89,
+    experience: "7 years",
+    pricePerHour: 28,
     category: "elderly-care",
-    specialty: "Alzheimer & Memory Care",
+    specialty: "Alzheimer & Dementia Care Specialist",
     isVerified: true,
-    phone: "+39 349 112 2334",
-    heroImage: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=900&q=85&fit=crop",
-    profilePhoto: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=300&q=85&fit=crop&crop=face",
+    phone: "",
+    heroImage: "https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?w=900&q=85&fit=crop",
+    profilePhoto: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=300&q=85&fit=crop&crop=face",
     gallery: [
-      "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=500&q=80&fit=crop",
-      "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=500&q=80&fit=crop",
-      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=500&q=80&fit=crop",
-      "https://images.unsplash.com/photo-1584515933487-779824d29309?w=500&q=80&fit=crop",
-      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=500&q=80&fit=crop",
+      "https://images.unsplash.com/photo-1551601651-2a8555f1a136?w=400&q=85&fit=crop",
+      "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&q=85&fit=crop",
+      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=400&q=85&fit=crop",
     ],
-    about: "I am a dedicated professional caregiver with over 8 years of specialised experience supporting individuals with Alzheimer's disease and memory conditions. I hold a degree in geriatric nursing from Università di Milano and have completed advanced training in dementia care.\n\nI provide compassionate, dignity-centred care that keeps your loved one safe, engaged, and comfortable at home. My approach combines structured daily routines with gentle cognitive stimulation — proven to slow memory decline.",
-    certifications: [
-      "Geriatric Nursing Certificate – Università di Milano",
-      "Alzheimer's Care Specialist (ACS)",
-      "First Aid & CPR Certified",
-      "Criminal Record — Clean (2024)",
-      "Government ID Verified",
-    ],
-    languages: ["Italian", "English", "French"],
-    serviceAreas: ["Milano Centro", "Navigli", "Porta Romana", "Brera", "Isola"],
+    about: "Certified geriatric care specialist with 12 years of experience in Alzheimer and dementia care. I provide compassionate, dignified support while maintaining the highest professional standards. Fluent in Italian, English, and Spanish.",
+    certifications: ["Certified Geriatric Care Manager (CGCM)", "Alzheimer's Care Specialist", "CPR & First Aid Certified", "Dementia Care Training (Level 3)"],
+    languages: ["Italian", "English", "Spanish"],
+    serviceAreas: ["Milano Centro", "Navigli", "Porta Romana", "Lambrate"],
     availabilityStatus: "available",
-    responseTime: "Under 15 min",
-    completedServices: 312,
-    memberSince: "March 2017",
-    reviewsList: [
-      {
-        id: "r1",
-        author: "Marco B.",
-        rating: 5,
-        text: "Sofia has been caring for my mother for 6 months. Her patience, professionalism and genuine warmth are extraordinary. Highly recommended.",
-        date: "April 2025",
-        avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&q=80&fit=crop&crop=face",
-      },
-      {
-        id: "r2",
-        author: "Laura C.",
-        rating: 5,
-        text: "Eccellente professionista. Mia nonna la adora. Sempre puntuale e molto preparata.",
-        date: "March 2025",
-        avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&q=80&fit=crop&crop=face",
-      },
-      {
-        id: "r3",
-        author: "Giuseppe M.",
-        rating: 5,
-        text: "Caring, attentive and incredibly knowledgeable. Sofia made a real difference for our family.",
-        date: "February 2025",
-        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&q=80&fit=crop&crop=face",
-      },
-    ],
+    responseTime: "< 30 min",
+    completedServices: 347,
+    memberSince: "Member since 2019",
+    reviewsList: [],
   },
   {
     id: "p2",
-    name: "Antonio Ricci",
+    name: "Marco Bianchi",
     rating: 4.7,
-    reviews: 89,
+    reviews: 54,
     experience: "5 years",
-    pricePerHour: 16,
+    pricePerHour: 22,
     category: "elderly-care",
-    specialty: "Full-Time Assistance",
+    specialty: "Home Care & Disability Support",
     isVerified: true,
-    phone: "+39 347 998 1122",
+    phone: "",
     heroImage: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=900&q=85&fit=crop",
-    profilePhoto: "https://images.unsplash.com/photo-1566753323558-f4e0952af115?w=300&q=85&fit=crop&crop=face",
+    profilePhoto: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=300&q=85&fit=crop&crop=face",
     gallery: [
-      "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=500&q=80&fit=crop",
-      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=500&q=80&fit=crop",
-      "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=500&q=80&fit=crop",
-      "https://images.unsplash.com/photo-1584515933487-779824d29309?w=500&q=80&fit=crop",
+      "https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?w=400&q=85&fit=crop",
+      "https://images.unsplash.com/photo-1551601651-2a8555f1a136?w=400&q=85&fit=crop",
     ],
-    about: "I provide comprehensive daily assistance to elderly clients who need support maintaining their independence at home. With 5 years of experience in personal care, mobility assistance and social companionship, I ensure your family member is never alone.\n\nI am trained in safe patient handling, fall prevention, and medication reminders. My calm and dependable presence brings peace of mind to both clients and their families.",
-    certifications: [
-      "Operatore Socio-Sanitario (OSS) — Regione Lombardia",
-      "Safe Patient Handling Certificate",
-      "First Aid & CPR Certified",
-      "Criminal Record — Clean (2024)",
-    ],
+    about: "Dedicated home care professional specialising in physical disability support, post-surgery recovery, and daily living assistance.",
+    certifications: ["Home Health Aide Certified", "Disability Support Worker", "CPR Certified"],
     languages: ["Italian", "English"],
-    serviceAreas: ["Torino Centro", "San Salvario", "Crocetta", "Lingotto"],
+    serviceAreas: ["Torino Centro", "Mirafiori", "San Salvario"],
     availabilityStatus: "available",
-    responseTime: "Under 30 min",
-    completedServices: 203,
-    memberSince: "July 2020",
-    reviewsList: [
-      {
-        id: "r1",
-        author: "Carla V.",
-        rating: 5,
-        text: "Antonio is incredibly reliable. My father trusts him completely and they have built a wonderful friendship.",
-        date: "May 2025",
-        avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&q=80&fit=crop&crop=face",
-      },
-      {
-        id: "r2",
-        author: "Riccardo F.",
-        rating: 4,
-        text: "Professional and caring. Always on time. Very good with my elderly mother.",
-        date: "April 2025",
-        avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&q=80&fit=crop&crop=face",
-      },
-    ],
+    responseTime: "< 1 hour",
+    completedServices: 201,
+    memberSince: "Member since 2020",
+    reviewsList: [],
   },
   {
     id: "p3",
-    name: "Francesca Romano",
+    name: "Elena Russo",
     rating: 4.8,
-    reviews: 201,
-    experience: "3 years",
-    pricePerHour: 14,
+    reviews: 112,
+    experience: "4 years",
+    pricePerHour: 15,
     category: "delivery",
-    specialty: "Pharmacy & Grocery Shopping",
+    specialty: "Pharmacy & Grocery Delivery",
     isVerified: true,
-    phone: "+39 348 445 6677",
-    heroImage: "https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=900&q=85&fit=crop",
-    profilePhoto: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&q=85&fit=crop&crop=face",
+    phone: "",
+    heroImage: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=900&q=85&fit=crop",
+    profilePhoto: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=300&q=85&fit=crop&crop=face",
     gallery: [
-      "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=500&q=80&fit=crop",
-      "https://images.unsplash.com/photo-1542838132-92c53300491e?w=500&q=80&fit=crop",
-      "https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=500&q=80&fit=crop",
-      "https://images.unsplash.com/photo-1534723452862-4c874986ebad?w=500&q=80&fit=crop",
+      "https://images.unsplash.com/photo-1563213126-a4273aed2016?w=400&q=85&fit=crop",
+      "https://images.unsplash.com/photo-1601758124510-52d02ddb7cbd?w=400&q=85&fit=crop",
     ],
-    about: "I specialize in reliable and careful shopping and delivery services for elderly clients and families who are unable to go out. I handle pharmacy prescription pickup, grocery shopping at local markets, and specialty store purchases with attention to every detail on your list.\n\nI treat every order as if I were shopping for my own family — checking expiry dates, picking the freshest produce, and always returning with a receipt.",
-    certifications: [
-      "Driving Licence Category B (Clean Record)",
-      "Food Handling Certificate",
-      "Criminal Record — Clean (2024)",
-      "Government ID Verified",
-    ],
-    languages: ["Italian", "English", "Spanish"],
-    serviceAreas: ["Roma Centro", "Trastevere", "Prati", "Parioli", "EUR"],
+    about: "Fast and reliable delivery specialist for pharmacies, supermarkets and local shops. Available 7 days a week.",
+    certifications: ["Food Handling Certificate", "Driver's License (B)", "Customer Service Excellence"],
+    languages: ["Italian"],
+    serviceAreas: ["Roma Centro", "Prati", "Trastevere", "Testaccio"],
     availabilityStatus: "available",
-    responseTime: "Under 20 min",
-    completedServices: 489,
-    memberSince: "January 2022",
-    reviewsList: [
-      {
-        id: "r1",
-        author: "Maria T.",
-        rating: 5,
-        text: "Francesca è semplicemente perfetta. Sempre disponibile, gentile e precisa. Non posso immaginare senza di lei.",
-        date: "May 2025",
-        avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&q=80&fit=crop&crop=face",
-      },
-    ],
+    responseTime: "< 45 min",
+    completedServices: 528,
+    memberSince: "Member since 2021",
+    reviewsList: [],
   },
   {
     id: "p4",
-    name: "Luca Colombo",
+    name: "Luigi Ferrari",
     rating: 4.6,
-    reviews: 67,
-    experience: "4 years",
-    pricePerHour: 15,
+    reviews: 178,
+    experience: "15 years",
+    pricePerHour: 35,
     category: "home-services",
-    specialty: "Plumbing & Electrical",
+    specialty: "Plumbing & Electrical Repair",
     isVerified: true,
-    phone: "+39 341 334 5566",
-    heroImage: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=900&q=85&fit=crop",
+    phone: "",
+    heroImage: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=900&q=85&fit=crop",
     profilePhoto: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&q=85&fit=crop&crop=face",
     gallery: [
-      "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=500&q=80&fit=crop",
-      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&q=80&fit=crop",
-      "https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=500&q=80&fit=crop",
-      "https://images.unsplash.com/photo-1581094288338-2314dddb7ece?w=500&q=80&fit=crop",
+      "https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=400&q=85&fit=crop",
     ],
-    about: "Experienced home maintenance specialist covering all aspects of residential plumbing and electrical repairs. I take pride in clean, efficient work that causes minimal disruption to your home.\n\nI use professional-grade materials only and provide a 90-day workmanship guarantee on all repairs. Safety is my top priority — especially in homes with elderly residents.",
-    certifications: [
-      "Licensed Electrician — Regione Lombardia",
-      "Certified Plumber (Grade B)",
-      "Electrical Safety Certificate",
-      "Criminal Record — Clean (2024)",
-    ],
-    languages: ["Italian", "English"],
-    serviceAreas: ["Milano", "Monza", "Sesto San Giovanni", "Cinisello Balsamo"],
+    about: "Master plumber and electrician with 15 years of experience. All work guaranteed and fully insured.",
+    certifications: ["Licensed Master Plumber", "Certified Electrician (Type B)", "Gas Safety Certificate"],
+    languages: ["Italian"],
+    serviceAreas: ["Napoli Centro", "Posillipo", "Vomero"],
     availabilityStatus: "busy",
-    responseTime: "Under 1 hour",
-    completedServices: 156,
-    memberSince: "May 2021",
-    reviewsList: [
-      {
-        id: "r1",
-        author: "Alberto N.",
-        rating: 5,
-        text: "Luca fixed our bathroom plumbing in under 2 hours. Professional, tidy and very fairly priced.",
-        date: "March 2025",
-        avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&q=80&fit=crop&crop=face",
-      },
-    ],
+    responseTime: "< 2 hours",
+    completedServices: 683,
+    memberSince: "Member since 2018",
+    reviewsList: [],
   },
   {
     id: "p5",
-    name: "Elena Conti",
+    name: "Anna Conti",
     rating: 4.9,
-    reviews: 312,
-    experience: "10 years",
-    pricePerHour: 20,
-    category: "elderly-care",
-    specialty: "Dementia & Disability Support",
+    reviews: 97,
+    experience: "5 years",
+    pricePerHour: 18,
+    category: "home-services",
+    specialty: "House Cleaning & Organisation",
     isVerified: true,
-    phone: "+39 345 778 9900",
-    heroImage: "https://images.unsplash.com/photo-1584515933487-779824d29309?w=900&q=85&fit=crop",
-    profilePhoto: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&q=85&fit=crop&crop=face",
+    phone: "",
+    heroImage: "https://images.unsplash.com/photo-1527515545081-5db817172677?w=900&q=85&fit=crop",
+    profilePhoto: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&q=85&fit=crop&crop=face",
     gallery: [
-      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=500&q=80&fit=crop",
-      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=500&q=80&fit=crop",
-      "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=500&q=80&fit=crop",
-      "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=500&q=80&fit=crop",
-      "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=500&q=80&fit=crop",
+      "https://images.unsplash.com/photo-1563453392212-326f5e854473?w=400&q=85&fit=crop",
     ],
-    about: "With a decade of dedicated experience in dementia and disability care, I am one of CuraVicino's most experienced and trusted professionals. I hold a Master's qualification in Neurological Rehabilitation and have worked across hospital, residential, and home-care settings.\n\nI specialise in creating structured, calm environments that improve quality of life for individuals with advanced dementia, Down syndrome, autism, and acquired brain injuries. My goal is always the same: to preserve dignity and maximise independence.",
-    certifications: [
-      "Master's in Neurological Rehabilitation – Università di Bologna",
-      "Dementia Care Advanced Practitioner",
-      "Disability Support Specialist",
-      "First Aid, CPR & AED Certified",
-      "Criminal Record — Clean (2024)",
-      "Government ID Verified",
-    ],
-    languages: ["Italian", "English", "German"],
-    serviceAreas: ["Bologna Centro", "San Vitale", "Savena", "Porto", "Navile"],
+    about: "Professional home cleaning and organisation specialist. I use eco-friendly products and pay attention to every detail.",
+    certifications: ["Professional Cleaning Certificate", "Eco-Clean Certified"],
+    languages: ["Italian", "Romanian"],
+    serviceAreas: ["Firenze Centro", "Oltrarno", "Campo di Marte"],
     availabilityStatus: "available",
-    responseTime: "Under 10 min",
-    completedServices: 724,
-    memberSince: "September 2015",
-    reviewsList: [
-      {
-        id: "r1",
-        author: "Federica M.",
-        rating: 5,
-        text: "Elena is an absolute angel. She has been with my father for 3 years and has transformed his daily life. I cannot put into words how grateful we are.",
-        date: "May 2025",
-        avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&q=80&fit=crop&crop=face",
-      },
-      {
-        id: "r2",
-        author: "Stefano R.",
-        rating: 5,
-        text: "The most professional carer I have ever hired. Elena brings knowledge, warmth and genuine care to every visit.",
-        date: "April 2025",
-        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&q=80&fit=crop&crop=face",
-      },
-      {
-        id: "r3",
-        author: "Anna P.",
-        rating: 5,
-        text: "Professionale, puntuale e dolcissima. Mia sorella la adora. Grazie Elena!",
-        date: "March 2025",
-        avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&q=80&fit=crop&crop=face",
-      },
-    ],
+    responseTime: "< 1 hour",
+    completedServices: 412,
+    memberSince: "Member since 2020",
+    reviewsList: [],
   },
   {
     id: "p6",
-    name: "Roberto Esposito",
+    name: "Roberto Palermo",
     rating: 4.5,
-    reviews: 45,
-    experience: "2 years",
-    pricePerHour: 13,
-    category: "home-services",
-    specialty: "Gardening & House Cleaning",
-    isVerified: true,
-    phone: "+39 342 667 8811",
-    heroImage: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=900&q=85&fit=crop",
-    profilePhoto: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&q=85&fit=crop&crop=face",
+    reviews: 61,
+    experience: "4 years",
+    pricePerHour: 14,
+    category: "delivery",
+    specialty: "Restaurant & Mall Delivery",
+    isVerified: false,
+    phone: "",
+    heroImage: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=900&q=85&fit=crop",
+    profilePhoto: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&q=85&fit=crop&crop=face",
     gallery: [
-      "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=500&q=80&fit=crop",
-      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&q=80&fit=crop",
-      "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=500&q=80&fit=crop",
-      "https://images.unsplash.com/photo-1581094288338-2314dddb7ece?w=500&q=80&fit=crop",
+      "https://images.unsplash.com/photo-1526367790999-0150786686a2?w=400&q=85&fit=crop",
     ],
-    about: "Reliable, thorough and detail-oriented home services professional based in Naples. I offer comprehensive gardening maintenance and deep-clean house cleaning services tailored to each client's home and preferences.\n\nI use eco-friendly products and take particular care in homes with elderly residents, ensuring all work is done quietly and without disruption to daily routines.",
-    certifications: [
-      "Professional Gardening Certificate",
-      "Eco-Cleaning Practitioner",
-      "Criminal Record — Clean (2024)",
-      "Government ID Verified",
-    ],
-    languages: ["Italian"],
-    serviceAreas: ["Napoli Centro", "Posillipo", "Vomero", "Chiaia"],
-    availabilityStatus: "available",
-    responseTime: "Under 45 min",
-    completedServices: 89,
-    memberSince: "November 2022",
-    reviewsList: [
-      {
-        id: "r1",
-        author: "Giulia A.",
-        rating: 5,
-        text: "Roberto transformed our garden completely. Very professional and hardworking young man.",
-        date: "April 2025",
-        avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&q=80&fit=crop&crop=face",
-      },
-    ],
+    about: "Reliable delivery driver specialising in restaurant food delivery and mall shopping.",
+    certifications: ["Food Safety Level 2", "Driver's License (B+C)"],
+    languages: ["Italian", "English"],
+    serviceAreas: ["Bologna Centro", "San Vitale", "Mazzini"],
+    availabilityStatus: "offline",
+    responseTime: "< 1 hour",
+    completedServices: 289,
+    memberSince: "Member since 2021",
+    reviewsList: [],
   },
 ];
 
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: "n1",
-    title: "Booking Confirmed",
-    message: "Your booking with Sofia Martinelli is confirmed for tomorrow at 9:00 AM.",
-    time: "2 min ago",
-    read: false,
-    type: "booking",
-  },
-  {
-    id: "n2",
-    title: "Provider On The Way",
-    message: "Antonio Ricci is heading to your location. ETA: 15 minutes.",
-    time: "1 hour ago",
-    read: false,
-    type: "provider",
-  },
-  {
-    id: "n3",
-    title: "Welcome to CuraVicino!",
-    message: "Thank you for joining. Always Close, Always Caring.",
-    time: "Yesterday",
-    read: true,
-    type: "system",
-  },
-];
+export const PROVIDERS = STATIC_PROVIDERS;
 
-export const PROVIDERS = MOCK_PROVIDERS;
+/* ─── AsyncStorage fallback cache ────────────────────────────────────────────── */
+const CACHE_BOOKINGS = "cv_bookings_cache";
+const CACHE_NOTIFS = "cv_notifs_cache";
 
+/* ─── Context ────────────────────────────────────────────────────────────────── */
 const BookingContext = createContext<BookingContextType>({
   bookings: [],
   notifications: [],
-  addBooking: () => {},
-  updateBooking: () => {},
+  addBooking: async () => {},
+  updateBooking: async () => {},
   markNotificationRead: () => {},
+  markAllNotificationsRead: () => {},
+  submitReview: async () => {},
+  refreshBookings: async () => {},
+  refreshNotifications: async () => {},
   unreadCount: 0,
 });
 
 export function BookingProvider({ children }: { children: React.ReactNode }) {
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
+  /* ── Load on mount ─────────────────────────────────────────────────────────── */
   useEffect(() => {
-    AsyncStorage.getItem("curavicino_bookings").then((v) => {
-      if (v) setBookings(JSON.parse(v));
-    });
+    loadFromCache();
+    loadFromApi();
+    // Also seed providers in case DB is fresh (idempotent)
+    ProvidersService.seed().catch(() => {});
   }, []);
 
-  const saveBookings = async (b: Booking[]) => {
-    setBookings(b);
-    await AsyncStorage.setItem("curavicino_bookings", JSON.stringify(b));
+  async function loadFromCache() {
+    try {
+      const [bRaw, nRaw] = await Promise.all([
+        AsyncStorage.getItem(CACHE_BOOKINGS),
+        AsyncStorage.getItem(CACHE_NOTIFS),
+      ]);
+      if (bRaw) setBookings(JSON.parse(bRaw));
+      if (nRaw) setNotifications(JSON.parse(nRaw));
+    } catch {
+      /* ignore */
+    }
+  }
+
+  async function loadFromApi() {
+    const token = await TokenStore.getAccess();
+    if (!token) return;
+    try {
+      const [apiBookings, apiNotifs] = await Promise.all([
+        BookingsService.list(),
+        NotificationsService.list(),
+      ]);
+      setBookings(apiBookings);
+      setNotifications(apiNotifs);
+      await AsyncStorage.setItem(CACHE_BOOKINGS, JSON.stringify(apiBookings));
+      await AsyncStorage.setItem(CACHE_NOTIFS, JSON.stringify(apiNotifs));
+    } catch {
+      /* Fall back to cached data */
+    }
+  }
+
+  /* ── Refresh helpers (callable from screens) ──────────────────────────────── */
+  const refreshBookings = async () => {
+    const token = await TokenStore.getAccess();
+    if (!token) return;
+    try {
+      const apiBookings = await BookingsService.list();
+      setBookings(apiBookings);
+      await AsyncStorage.setItem(CACHE_BOOKINGS, JSON.stringify(apiBookings));
+    } catch {
+      /* ignore */
+    }
   };
 
-  const generateId = () =>
-    Date.now().toString() + Math.random().toString(36).substr(2, 9);
+  const refreshNotifications = async () => {
+    const token = await TokenStore.getAccess();
+    if (!token) return;
+    try {
+      const apiNotifs = await NotificationsService.list();
+      setNotifications(apiNotifs);
+      await AsyncStorage.setItem(CACHE_NOTIFS, JSON.stringify(apiNotifs));
+    } catch {
+      /* ignore */
+    }
+  };
 
-  const addBooking = (b: Omit<Booking, "id">) => {
-    const newBooking = { ...b, id: generateId() };
-    saveBookings([newBooking, ...bookings]);
+  /* ── Add Booking ──────────────────────────────────────────────────────────── */
+  const addBooking = async (b: Omit<Booking, "id">) => {
+    const token = await TokenStore.getAccess();
+
+    if (token) {
+      try {
+        const created = await BookingsService.create({
+          providerId: b.providerId,
+          providerName: b.providerName,
+          service: b.service,
+          category: b.category,
+          date: b.date,
+          time: b.time,
+          duration: b.duration,
+          totalCost: b.totalCost,
+          notes: b.notes,
+        });
+        const updated = [created, ...bookings];
+        setBookings(updated);
+        await AsyncStorage.setItem(CACHE_BOOKINGS, JSON.stringify(updated));
+        /* Reload notifications so the booking-confirmed notification appears */
+        await refreshNotifications();
+        return;
+      } catch {
+        /* Fall through to local fallback */
+      }
+    }
+
+    /* Offline / unauthenticated fallback */
+    const localId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+    const newBooking: Booking = { ...b, id: localId };
+    const updated = [newBooking, ...bookings];
+    setBookings(updated);
+    await AsyncStorage.setItem(CACHE_BOOKINGS, JSON.stringify(updated));
+
     const newNotif: Notification = {
-      id: generateId(),
+      id: localId + "_n",
       title: "Booking Confirmed",
       message: `Your booking for ${b.service} is confirmed.`,
       time: "Just now",
@@ -449,22 +379,76 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
     setNotifications((prev) => [newNotif, ...prev]);
   };
 
-  const updateBooking = (id: string, data: Partial<Booking>) => {
+  /* ── Update Booking ────────────────────────────────────────────────────────── */
+  const updateBooking = async (id: string, data: Partial<Booking>) => {
+    /* Optimistic local update first */
     const updated = bookings.map((b) => (b.id === id ? { ...b, ...data } : b));
-    saveBookings(updated);
+    setBookings(updated);
+    await AsyncStorage.setItem(CACHE_BOOKINGS, JSON.stringify(updated));
+
+    /* Sync to API if status changed */
+    if (data.status) {
+      const token = await TokenStore.getAccess();
+      if (token) {
+        try {
+          await BookingsService.updateStatus(id, data.status);
+        } catch {
+          /* Revert on failure */
+          setBookings(bookings);
+          await AsyncStorage.setItem(CACHE_BOOKINGS, JSON.stringify(bookings));
+        }
+      }
+    }
   };
 
+  /* ── Submit Review ─────────────────────────────────────────────────────────── */
+  const submitReview = async (
+    bookingId: string,
+    rating: number,
+    text: string,
+    customerName?: string
+  ) => {
+    const token = await TokenStore.getAccess();
+    if (token) {
+      await BookingsService.submitReview(bookingId, { rating, text, customerName });
+    }
+    /* Update local booking with review */
+    const updated = bookings.map((b) =>
+      b.id === bookingId ? { ...b, rating, review: text } : b
+    );
+    setBookings(updated);
+    await AsyncStorage.setItem(CACHE_BOOKINGS, JSON.stringify(updated));
+  };
+
+  /* ── Notifications ─────────────────────────────────────────────────────────── */
   const markNotificationRead = (id: string) => {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
+    NotificationsService.markRead(id).catch(() => {});
+  };
+
+  const markAllNotificationsRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    NotificationsService.markAllRead().catch(() => {});
   };
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
     <BookingContext.Provider
-      value={{ bookings, notifications, addBooking, updateBooking, markNotificationRead, unreadCount }}
+      value={{
+        bookings,
+        notifications,
+        addBooking,
+        updateBooking,
+        markNotificationRead,
+        markAllNotificationsRead,
+        submitReview,
+        refreshBookings,
+        refreshNotifications,
+        unreadCount,
+      }}
     >
       {children}
     </BookingContext.Provider>
@@ -475,4 +459,4 @@ export function useBooking() {
   return useContext(BookingContext);
 }
 
-export { MOCK_PROVIDERS as providers };
+export { STATIC_PROVIDERS as providers };
