@@ -21,8 +21,11 @@ interface Props {
 const AVAIL_COLOR: Record<string, string> = {
   available: "#009246",
   busy: "#f0a500",
-  offline: "#aaa",
+  offline: "#999",
 };
+
+const HERO_BLURHASH = "L6PZfSi_.AyE_3t7t7R**0o#DgR4";
+const AVATAR_BLURHASH = "L9AS$dt7IU~q~qofM{xt%Mj[ayj[";
 
 export function ProviderCard({ provider, onBook }: Props) {
   const colors = useColors();
@@ -41,10 +44,12 @@ export function ProviderCard({ provider, onBook }: Props) {
           source={{ uri: provider.heroImage }}
           style={styles.heroImg}
           contentFit="cover"
+          transition={250}
+          placeholder={{ blurhash: HERO_BLURHASH }}
         />
         <View style={styles.heroGrad} />
         <View style={[styles.availBadge, { backgroundColor: availColor + "ee" }]}>
-          <View style={[styles.availDot, { backgroundColor: "#fff" }]} />
+          <View style={styles.availDot} />
           <Text style={styles.availText}>
             {provider.availabilityStatus === "available"
               ? "Available"
@@ -61,6 +66,8 @@ export function ProviderCard({ provider, onBook }: Props) {
             source={{ uri: provider.profilePhoto }}
             style={[styles.avatar, { borderColor: colors.background }]}
             contentFit="cover"
+            transition={200}
+            placeholder={{ blurhash: AVATAR_BLURHASH }}
           />
           <View style={styles.info}>
             <View style={styles.nameRow}>
@@ -146,7 +153,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 60,
-    backgroundColor: "rgba(0,0,0,0.35)",
+    backgroundColor: "rgba(0,0,0,0.3)",
   },
   availBadge: {
     position: "absolute",
@@ -159,7 +166,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 20,
   },
-  availDot: { width: 6, height: 6, borderRadius: 3 },
+  availDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#fff" },
   availText: { fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#fff" },
   body: { padding: 14, paddingTop: 0 },
   topRow: { flexDirection: "row", alignItems: "flex-end", marginTop: -20, marginBottom: 10, gap: 10 },

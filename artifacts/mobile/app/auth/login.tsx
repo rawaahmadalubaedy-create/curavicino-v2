@@ -1,9 +1,11 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -66,13 +68,16 @@ export default function LoginScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient
-        colors={["#009246", "#009246dd", colors.background]}
-        style={[styles.headerGrad, { paddingTop: insets.top + 20 }]}
+        colors={["#009246", "#007a3a", colors.background]}
+        locations={[0, 0.55, 1]}
+        style={[styles.headerGrad, { paddingTop: insets.top + 24 }]}
       >
         <View style={styles.logoWrap}>
-          <View style={[styles.logoCircle, { backgroundColor: "#ffffff33" }]}>
-            <Feather name="heart" size={32} color="#ffffff" />
-          </View>
+          <Image
+            source={require("@/assets/images/icon.png")}
+            style={styles.logoImage}
+            contentFit="contain"
+          />
         </View>
         <Text style={styles.appName}>CuraVicino</Text>
         <Text style={styles.slogan}>{t("appSlogan")}</Text>
@@ -89,7 +94,7 @@ export default function LoginScreen() {
         >
           <Text style={[styles.heading, { color: colors.darkText }]}>{t("signIn")}</Text>
 
-          <View style={styles.modeToggle}>
+          <View style={[styles.modeToggle, { backgroundColor: colors.muted }]}>
             <TouchableOpacity
               style={[styles.modeBtn, mode === "email" && { backgroundColor: colors.primary }]}
               onPress={() => setMode("email")}
@@ -120,6 +125,7 @@ export default function LoginScreen() {
                   onChangeText={setEmail}
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  autoCorrect={false}
                 />
               </View>
               <View style={[styles.inputWrap, { borderColor: colors.border, backgroundColor: colors.surface }]}>
@@ -160,7 +166,11 @@ export default function LoginScreen() {
             disabled={loading}
             activeOpacity={0.85}
           >
-            <Text style={styles.loginBtnText}>{loading ? "..." : t("signIn")}</Text>
+            {loading ? (
+              <ActivityIndicator color="#ffffff" size="small" />
+            ) : (
+              <Text style={styles.loginBtnText}>{t("signIn")}</Text>
+            )}
           </TouchableOpacity>
 
           <View style={styles.dividerRow}>
@@ -174,16 +184,22 @@ export default function LoginScreen() {
               style={[styles.socialBtn, { borderColor: colors.border, backgroundColor: colors.surface }]}
               onPress={() => handleSocial("google")}
               activeOpacity={0.8}
+              disabled={loading}
             >
-              <Feather name="globe" size={20} color="#DB4437" />
+              <View style={[styles.socialIconBg, { backgroundColor: "#DB4437" + "18" }]}>
+                <Feather name="globe" size={17} color="#DB4437" />
+              </View>
               <Text style={[styles.socialText, { color: colors.darkText }]}>{t("google")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.socialBtn, { borderColor: colors.border, backgroundColor: colors.surface }]}
               onPress={() => handleSocial("facebook")}
               activeOpacity={0.8}
+              disabled={loading}
             >
-              <Feather name="facebook" size={20} color="#1877F2" />
+              <View style={[styles.socialIconBg, { backgroundColor: "#1877F2" + "18" }]}>
+                <Feather name="facebook" size={17} color="#1877F2" />
+              </View>
               <Text style={[styles.socialText, { color: colors.darkText }]}>{t("facebook")}</Text>
             </TouchableOpacity>
           </View>
@@ -205,38 +221,44 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   headerGrad: {
     paddingHorizontal: 24,
-    paddingBottom: 32,
+    paddingBottom: 36,
     alignItems: "center",
   },
-  logoWrap: { marginBottom: 12 },
-  logoCircle: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    alignItems: "center",
-    justifyContent: "center",
+  logoWrap: {
+    width: 80,
+    height: 80,
+    borderRadius: 22,
+    overflow: "hidden",
+    marginBottom: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 6,
   },
+  logoImage: { width: 80, height: 80 },
   appName: {
-    fontSize: 28,
+    fontSize: 30,
     fontFamily: "Inter_700Bold",
     color: "#ffffff",
     marginBottom: 4,
+    letterSpacing: -0.5,
   },
   slogan: {
     fontSize: 13,
     fontFamily: "Inter_400Regular",
-    color: "rgba(255,255,255,0.85)",
+    color: "rgba(255,255,255,0.88)",
+    letterSpacing: 0.2,
   },
   scroll: { paddingHorizontal: 24, paddingTop: 28 },
   heading: { fontSize: 26, fontFamily: "Inter_700Bold", marginBottom: 20 },
   modeToggle: {
     flexDirection: "row",
-    backgroundColor: "#f0f0f0",
     borderRadius: 12,
     padding: 4,
     marginBottom: 20,
   },
-  modeBtn: { flex: 1, paddingVertical: 8, borderRadius: 10, alignItems: "center" },
+  modeBtn: { flex: 1, paddingVertical: 9, borderRadius: 10, alignItems: "center" },
   modeTxt: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
   inputWrap: {
     flexDirection: "row",
@@ -245,7 +267,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     marginBottom: 14,
     paddingHorizontal: 14,
-    height: 52,
+    height: 54,
   },
   inputIcon: { marginRight: 10 },
   input: { flex: 1, fontSize: 15, fontFamily: "Inter_400Regular" },
@@ -265,7 +287,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   loginBtnText: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#ffffff" },
-  disabled: { opacity: 0.6 },
+  disabled: { opacity: 0.65 },
   dividerRow: { flexDirection: "row", alignItems: "center", marginBottom: 20, gap: 10 },
   line: { flex: 1, height: 1 },
   dividerText: { fontSize: 13, fontFamily: "Inter_400Regular" },
@@ -279,6 +301,13 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 14,
     borderWidth: 1.5,
+  },
+  socialIconBg: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
   },
   socialText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
   registerRow: { flexDirection: "row", justifyContent: "center" },

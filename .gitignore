@@ -47,3 +47,28 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Expo build outputs
+artifacts/*/dist/
+web-build/
+expo-env.d.ts
+
+# Native build folders (generated — do not commit)
+ios/
+android/
+
+# Environment secrets
+.env
+.env.local
+.env.*.local
+
+# Build logs
+/tmp/logs/
+*.log
+
+# TypeScript incremental build
+*.tsbuildinfo
+
+# pnpm
+.pnp
+.pnp.js

@@ -1,8 +1,6 @@
-import { Feather } from "@expo/vector-icons";
+import { AntDesign } from "@expo/vector-icons";
 import React from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
-
-import { useColors } from "@/hooks/useColors";
 
 interface Props {
   rating: number;
@@ -11,26 +9,31 @@ interface Props {
   onRate?: (r: number) => void;
 }
 
-export function StarRating({ rating, size = 18, interactive = false, onRate }: Props) {
-  const colors = useColors();
+const STAR_FILLED = "#f0a500";
+const STAR_EMPTY = "#d8d8d8";
 
+export function StarRating({ rating, size = 18, interactive = false, onRate }: Props) {
   return (
     <View style={styles.row}>
-      {[1, 2, 3, 4, 5].map((i) => (
-        <TouchableOpacity
-          key={i}
-          disabled={!interactive}
-          onPress={() => onRate?.(i)}
-          activeOpacity={0.7}
-        >
-          <Feather
-            name={i <= Math.round(rating) ? "star" : "star"}
-            size={size}
-            color={i <= Math.round(rating) ? colors.star : colors.border}
-            style={styles.star}
-          />
-        </TouchableOpacity>
-      ))}
+      {[1, 2, 3, 4, 5].map((i) => {
+        const filled = i <= Math.round(rating);
+        return (
+          <TouchableOpacity
+            key={i}
+            disabled={!interactive}
+            onPress={() => onRate?.(i)}
+            activeOpacity={0.7}
+            hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
+          >
+            <AntDesign
+              name={filled ? "star" : "staro"}
+              size={size}
+              color={filled ? STAR_FILLED : STAR_EMPTY}
+              style={styles.star}
+            />
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 }

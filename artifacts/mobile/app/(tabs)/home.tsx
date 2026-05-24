@@ -78,7 +78,7 @@ export default function HomeScreen() {
               style={[styles.langBtn, { backgroundColor: "rgba(255,255,255,0.2)" }]}
               onPress={() => setLang(lang === "en" ? "it" : "en")}
             >
-              <Text style={styles.langText}>{lang === "en" ? "🇮🇹" : "🇬🇧"}</Text>
+              <Text style={styles.langText}>{lang === "en" ? "IT" : "EN"}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.notifBtn, { backgroundColor: "rgba(255,255,255,0.2)" }]}
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
   userName: { fontSize: 20, fontFamily: "Inter_700Bold", color: "#ffffff", maxWidth: 200 },
   headerRight: { flexDirection: "row", gap: 8 },
   langBtn: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
-  langText: { fontSize: 18 },
+  langText: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#ffffff", letterSpacing: 0.5 },
   notifBtn: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
   searchBar: {
     flexDirection: "row",

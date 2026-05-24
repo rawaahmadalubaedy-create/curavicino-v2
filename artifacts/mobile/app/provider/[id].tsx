@@ -180,6 +180,8 @@ export default function ProviderProfileScreen() {
                 source={{ uri: provider.heroImage }}
                 style={{ width: SCREEN_W, height: HERO_HEIGHT + 80 }}
                 contentFit="cover"
+                transition={400}
+                placeholder={{ blurhash: "L6PZfSi_.AyE_3t7t7R**0o#DgR4" }}
               />
             </Animated.View>
           </Animated.View>
@@ -210,6 +212,8 @@ export default function ProviderProfileScreen() {
                   source={{ uri: provider.profilePhoto }}
                   style={styles.heroAvatar}
                   contentFit="cover"
+                  transition={300}
+                  placeholder={{ blurhash: "L9AS$dt7IU~q~qofM{xt%Mj[ayj[" }}
                 />
                 {provider.isVerified && (
                   <View style={[styles.heroBadge, { backgroundColor: "#009246" }]}>
@@ -268,13 +272,20 @@ export default function ProviderProfileScreen() {
 
           {/* ── GALLERY ── */}
           <SectionBlock title="Gallery" icon="image" colors={colors}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.galleryScroll}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.galleryScroll}
+              contentContainerStyle={{ paddingRight: 4 }}
+            >
               {provider.gallery.map((uri, i) => (
-                <View key={i} style={styles.galleryItem}>
+                <View key={i} style={[styles.galleryItem, i === provider.gallery.length - 1 && { marginRight: 0 }]}>
                   <Image
                     source={{ uri }}
                     style={styles.galleryImage}
                     contentFit="cover"
+                    transition={250}
+                    placeholder={{ blurhash: "L6PZfSi_.AyE_3t7t7R**0o#DgR4" }}
                   />
                   <LinearGradient
                     colors={["transparent", "rgba(0,0,0,0.3)"]}
@@ -358,6 +369,8 @@ export default function ProviderProfileScreen() {
                     source={{ uri: review.avatar }}
                     style={styles.reviewAvatar}
                     contentFit="cover"
+                    transition={200}
+                    placeholder={{ blurhash: "L9AS$dt7IU~q~qofM{xt%Mj[ayj[" }}
                   />
                   <View style={styles.reviewMeta}>
                     <Text style={[styles.reviewAuthor, { color: colors.darkText }]}>{review.author}</Text>
