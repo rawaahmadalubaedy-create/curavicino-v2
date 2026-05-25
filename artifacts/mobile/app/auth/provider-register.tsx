@@ -4,9 +4,11 @@ import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -20,23 +22,53 @@ import { useColors } from "@/hooks/useColors";
 
 type Withdrawal = "daily" | "weekly" | "monthly";
 
+const LANGUAGES = ["Italian", "English", "French", "German", "Spanish", "Arabic"];
+const SERVICE_CATEGORIES = [
+  { id: "elderly-care", label: "Medical Care", icon: "activity" },
+  { id: "delivery", label: "Delivery & Shopping", icon: "package" },
+  { id: "home-services", label: "Home Services", icon: "home" },
+];
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
 export default function ProviderRegisterScreen() {
   const colors = useColors();
   const { t } = useLang();
   const insets = useSafeAreaInsets();
   const { registerProvider } = useAuth();
 
+  /* ── Basic info ───────────────────────────────────────────────────────────── */
   const [fullName, setFullName] = useState("");
+  const [age, setAge] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [withdrawal, setWithdrawal] = useState<Withdrawal>("weekly");
+  const [address, setAddress] = useState("");
+
+  /* ── Languages ────────────────────────────────────────────────────────────── */
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(["Italian"]);
+
+  /* ── Service categories ───────────────────────────────────────────────────── */
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
+  /* ── Availability ─────────────────────────────────────────────────────────── */
+  const [workingDays, setWorkingDays] = useState<string[]>(["Mon", "Tue", "Wed", "Thu", "Fri"]);
+  const [hoursFrom, setHoursFrom] = useState("08:00");
+  const [hoursTo, setHoursTo] = useState("18:00");
+  const [isOnline, setIsOnline] = useState(true);
+
+  /* ── Documents & withdrawal ───────────────────────────────────────────────── */
   const [uploads, setUploads] = useState<Record<string, boolean>>({
     id: false,
     medical: false,
     criminal: false,
     photo: false,
   });
+  const [withdrawal, setWithdrawal] = useState<Withdrawal>("weekly");
   const [loading, setLoading] = useState(false);
+
+  /* ── Helpers ──────────────────────────────────────────────────────────────── */
+  const toggleItem = (arr: string[], item: string, setArr: (v: string[]) => void) => {
+    setArr(arr.includes(item) ? arr.filter((i) => i !== item) : [...arr, item]);
+  };
 
   const handleUpload = async (key: string) => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -54,9 +86,19 @@ export default function ProviderRegisterScreen() {
       Alert.alert("", t("required"));
       return;
     }
+    if (selectedCategories.length === 0) {
+      Alert.alert("", t("selectCategoryRequired"));
+      return;
+    }
     setLoading(true);
     try {
-      await registerProvider({ fullName, phone, email, withdrawalPreference: withdrawal });
+      await registerProvider({
+        fullName,
+        phone,
+        email,
+        address,
+        withdrawalPreference: withdrawal,
+      });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert("", t("providerVerification"), [
         { text: "OK", onPress: () => router.replace("/(tabs)/home") },
@@ -66,15 +108,40 @@ export default function ProviderRegisterScreen() {
     }
   };
 
-  const UploadRow = ({
-    docKey,
+  /* ── Subcomponents ────────────────────────────────────────────────────────── */
+  const InputField = ({
     label,
+    value,
+    onChange,
     icon,
+    keyboard = "default",
+    placeholder = "",
   }: {
-    docKey: string;
     label: string;
+    value: string;
+    onChange: (v: string) => void;
     icon: string;
+    keyboard?: any;
+    placeholder?: string;
   }) => (
+    <View style={styles.fieldWrap}>
+      <Text style={[styles.label, { color: colors.darkText }]}>{label}</Text>
+      <View style={[styles.inputWrap, { borderColor: colors.border, backgroundColor: colors.surface }]}>
+        <Feather name={icon as any} size={18} color={colors.subText} style={styles.inputIcon} />
+        <TextInput
+          style={[styles.input, { color: colors.darkText }]}
+          value={value}
+          onChangeText={onChange}
+          keyboardType={keyboard}
+          placeholder={placeholder || label}
+          placeholderTextColor={colors.mutedForeground}
+          autoCapitalize={keyboard === "email-address" ? "none" : "words"}
+        />
+      </View>
+    </View>
+  );
+
+  const UploadRow = ({ docKey, label, icon }: { docKey: string; label: string; icon: string }) => (
     <TouchableOpacity
       style={[
         styles.uploadRow,
@@ -91,11 +158,7 @@ export default function ProviderRegisterScreen() {
       </View>
       <Text style={[styles.uploadLabel, { color: colors.darkText }]}>{label}</Text>
       <View style={[styles.uploadStatus, { backgroundColor: uploads[docKey] ? colors.primary : "#f0f0f0" }]}>
-        <Feather
-          name={uploads[docKey] ? "check" : "upload"}
-          size={14}
-          color={uploads[docKey] ? "#fff" : colors.subText}
-        />
+        <Feather name={uploads[docKey] ? "check" : "upload"} size={14} color={uploads[docKey] ? "#fff" : colors.subText} />
         <Text style={[styles.uploadStatusText, { color: uploads[docKey] ? "#fff" : colors.subText }]}>
           {uploads[docKey] ? t("uploaded") : t("tapToUpload")}
         </Text>
@@ -109,68 +172,173 @@ export default function ProviderRegisterScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Feather name="arrow-left" size={22} color="#ffffff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t("serviceProvider")} {t("register")}</Text>
+        <Text style={styles.headerTitle}>{t("providerRegistration")}</Text>
         <View style={{ width: 38 }} />
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 24 }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.fieldWrap}>
-          <Text style={[styles.label, { color: colors.darkText }]}>{t("fullName")}</Text>
-          <View style={[styles.inputWrap, { borderColor: colors.border, backgroundColor: colors.surface }]}>
-            <Feather name="user" size={18} color={colors.subText} style={styles.inputIcon} />
-            <TextInput
-              style={[styles.input, { color: colors.darkText }]}
-              value={fullName}
-              onChangeText={setFullName}
-              placeholder={t("fullName")}
-              placeholderTextColor={colors.mutedForeground}
-            />
+        {/* ── STEP 1: Basic Info ── */}
+        <View style={[styles.stepBadge, { backgroundColor: colors.red + "18" }]}>
+          <Text style={[styles.stepBadgeText, { color: colors.red }]}>1 — {t("basicInfo")}</Text>
+        </View>
+
+        <InputField label={t("fullName")} value={fullName} onChange={setFullName} icon="user" />
+        <InputField label={t("age")} value={age} onChange={setAge} icon="calendar" keyboard="numeric" placeholder="e.g. 35" />
+        <InputField label={t("phone")} value={phone} onChange={setPhone} icon="phone" keyboard="phone-pad" placeholder="+39 000 000 0000" />
+        <InputField label={t("email")} value={email} onChange={setEmail} icon="mail" keyboard="email-address" placeholder={t("email")} />
+        <InputField label={t("address")} value={address} onChange={setAddress} icon="map-pin" placeholder={t("address")} />
+
+        {/* ── STEP 2: Languages ── */}
+        <View style={[styles.stepBadge, { backgroundColor: colors.red + "18", marginTop: 8 }]}>
+          <Text style={[styles.stepBadgeText, { color: colors.red }]}>2 — {t("languagesSpoken")}</Text>
+        </View>
+        <View style={styles.chipRow}>
+          {LANGUAGES.map((lang) => {
+            const active = selectedLanguages.includes(lang);
+            return (
+              <TouchableOpacity
+                key={lang}
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor: active ? colors.red : colors.surface,
+                    borderColor: active ? colors.red : colors.border,
+                  },
+                ]}
+                onPress={() => toggleItem(selectedLanguages, lang, setSelectedLanguages)}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.chipText, { color: active ? "#fff" : colors.darkText }]}>{lang}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* ── STEP 3: Service Categories ── */}
+        <View style={[styles.stepBadge, { backgroundColor: colors.red + "18", marginTop: 8 }]}>
+          <Text style={[styles.stepBadgeText, { color: colors.red }]}>3 — {t("serviceCategories")}</Text>
+        </View>
+        <Text style={[styles.helperText, { color: colors.subText }]}>{t("selectAllThatApply")}</Text>
+        {SERVICE_CATEGORIES.map((cat) => {
+          const active = selectedCategories.includes(cat.id);
+          return (
+            <TouchableOpacity
+              key={cat.id}
+              style={[
+                styles.categoryCard,
+                {
+                  borderColor: active ? colors.red : colors.border,
+                  backgroundColor: active ? colors.red + "12" : colors.surface,
+                },
+              ]}
+              onPress={() => toggleItem(selectedCategories, cat.id, setSelectedCategories)}
+              activeOpacity={0.85}
+            >
+              <View style={[styles.catIconBox, { backgroundColor: active ? colors.red : colors.muted }]}>
+                <Feather name={cat.icon as any} size={20} color={active ? "#fff" : colors.subText} />
+              </View>
+              <Text style={[styles.catLabel, { color: active ? colors.red : colors.darkText }]}>
+                {cat.label}
+              </Text>
+              {active && <Feather name="check-circle" size={20} color={colors.red} />}
+            </TouchableOpacity>
+          );
+        })}
+
+        {/* ── STEP 4: Availability ── */}
+        <View style={[styles.stepBadge, { backgroundColor: colors.red + "18", marginTop: 8 }]}>
+          <Text style={[styles.stepBadgeText, { color: colors.red }]}>4 — {t("availabilitySetup")}</Text>
+        </View>
+
+        {/* Online toggle */}
+        <View style={[styles.availRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <View style={styles.availRowLeft}>
+            <View style={[styles.availDot, { backgroundColor: isOnline ? "#009246" : "#999" }]} />
+            <Text style={[styles.availLabel, { color: colors.darkText }]}>
+              {isOnline ? t("availableOnline") : t("setOffline")}
+            </Text>
+          </View>
+          <Switch
+            value={isOnline}
+            onValueChange={setIsOnline}
+            trackColor={{ false: "#ccc", true: colors.primary + "88" }}
+            thumbColor={isOnline ? colors.primary : "#f0f0f0"}
+          />
+        </View>
+
+        {/* Working days */}
+        <Text style={[styles.subLabel, { color: colors.darkText }]}>{t("workingDays")}</Text>
+        <View style={styles.daysRow}>
+          {DAYS.map((day) => {
+            const active = workingDays.includes(day);
+            return (
+              <TouchableOpacity
+                key={day}
+                style={[
+                  styles.dayBtn,
+                  {
+                    backgroundColor: active ? colors.primary : colors.surface,
+                    borderColor: active ? colors.primary : colors.border,
+                  },
+                ]}
+                onPress={() => toggleItem(workingDays, day, setWorkingDays)}
+              >
+                <Text style={[styles.dayTxt, { color: active ? "#fff" : colors.subText }]}>{day}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* Working hours */}
+        <Text style={[styles.subLabel, { color: colors.darkText }]}>{t("workingHours")}</Text>
+        <View style={styles.hoursRow}>
+          <View style={styles.hourBlock}>
+            <Text style={[styles.hourLabel, { color: colors.subText }]}>{t("from")}</Text>
+            <View style={[styles.hourInput, { borderColor: colors.border, backgroundColor: colors.surface }]}>
+              <Feather name="clock" size={16} color={colors.primary} />
+              <TextInput
+                style={[styles.hourText, { color: colors.darkText }]}
+                value={hoursFrom}
+                onChangeText={setHoursFrom}
+                placeholder="08:00"
+                placeholderTextColor={colors.mutedForeground}
+                keyboardType="numbers-and-punctuation"
+              />
+            </View>
+          </View>
+          <Feather name="arrow-right" size={18} color={colors.subText} style={styles.arrowIcon} />
+          <View style={styles.hourBlock}>
+            <Text style={[styles.hourLabel, { color: colors.subText }]}>{t("to")}</Text>
+            <View style={[styles.hourInput, { borderColor: colors.border, backgroundColor: colors.surface }]}>
+              <Feather name="clock" size={16} color={colors.primary} />
+              <TextInput
+                style={[styles.hourText, { color: colors.darkText }]}
+                value={hoursTo}
+                onChangeText={setHoursTo}
+                placeholder="18:00"
+                placeholderTextColor={colors.mutedForeground}
+                keyboardType="numbers-and-punctuation"
+              />
+            </View>
           </View>
         </View>
 
-        <View style={styles.fieldWrap}>
-          <Text style={[styles.label, { color: colors.darkText }]}>{t("phone")}</Text>
-          <View style={[styles.inputWrap, { borderColor: colors.border, backgroundColor: colors.surface }]}>
-            <Feather name="phone" size={18} color={colors.subText} style={styles.inputIcon} />
-            <TextInput
-              style={[styles.input, { color: colors.darkText }]}
-              value={phone}
-              onChangeText={setPhone}
-              placeholder="+39 000 000 0000"
-              placeholderTextColor={colors.mutedForeground}
-              keyboardType="phone-pad"
-            />
-          </View>
+        {/* ── STEP 5: Documents ── */}
+        <View style={[styles.stepBadge, { backgroundColor: colors.red + "18", marginTop: 8 }]}>
+          <Text style={[styles.stepBadgeText, { color: colors.red }]}>5 — {t("verificationDocs")}</Text>
         </View>
-
-        <View style={styles.fieldWrap}>
-          <Text style={[styles.label, { color: colors.darkText }]}>{t("email")}</Text>
-          <View style={[styles.inputWrap, { borderColor: colors.border, backgroundColor: colors.surface }]}>
-            <Feather name="mail" size={18} color={colors.subText} style={styles.inputIcon} />
-            <TextInput
-              style={[styles.input, { color: colors.darkText }]}
-              value={email}
-              onChangeText={setEmail}
-              placeholder={t("email")}
-              placeholderTextColor={colors.mutedForeground}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
-        </View>
-
-        <Text style={[styles.sectionTitle, { color: colors.darkText }]}>Documents</Text>
 
         <UploadRow docKey="id" label={t("uploadId")} icon="credit-card" />
         <UploadRow docKey="medical" label={t("uploadMedical")} icon="activity" />
         <UploadRow docKey="criminal" label={t("uploadCriminal")} icon="shield" />
         <UploadRow docKey="photo" label={t("uploadPhoto")} icon="camera" />
 
-        <Text style={[styles.sectionTitle, { color: colors.darkText }]}>{t("linkBanking")}</Text>
+        {/* Banking */}
+        <Text style={[styles.subLabel, { color: colors.darkText }]}>{t("linkBanking")}</Text>
         <TouchableOpacity
           style={[styles.bankingBtn, { borderColor: colors.primary, backgroundColor: colors.lightGreen }]}
           activeOpacity={0.8}
@@ -180,7 +348,8 @@ export default function ProviderRegisterScreen() {
           <Feather name="chevron-right" size={18} color={colors.primary} />
         </TouchableOpacity>
 
-        <Text style={[styles.sectionTitle, { color: colors.darkText }]}>{t("withdrawal")}</Text>
+        {/* Withdrawal preference */}
+        <Text style={[styles.subLabel, { color: colors.darkText }]}>{t("withdrawal")}</Text>
         <View style={styles.withdrawalRow}>
           {(["daily", "weekly", "monthly"] as Withdrawal[]).map((opt) => (
             <TouchableOpacity
@@ -188,7 +357,7 @@ export default function ProviderRegisterScreen() {
               style={[
                 styles.withdrawalBtn,
                 {
-                  backgroundColor: withdrawal === opt ? colors.primary : "#f0f0f0",
+                  backgroundColor: withdrawal === opt ? colors.primary : colors.surface,
                   borderColor: withdrawal === opt ? colors.primary : colors.border,
                 },
               ]}
@@ -201,13 +370,18 @@ export default function ProviderRegisterScreen() {
           ))}
         </View>
 
+        {/* Submit */}
         <TouchableOpacity
           style={[styles.submitBtn, { backgroundColor: colors.red }, loading && styles.disabled]}
           onPress={handleRegister}
           disabled={loading}
           activeOpacity={0.85}
         >
-          <Text style={styles.submitBtnText}>{loading ? "..." : t("register")}</Text>
+          {loading ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <Text style={styles.submitBtnText}>{t("register")}</Text>
+          )}
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -225,10 +399,21 @@ const styles = StyleSheet.create({
   },
   backBtn: { padding: 8 },
   headerTitle: { fontSize: 18, fontFamily: "Inter_700Bold", color: "#ffffff" },
-  scroll: { paddingHorizontal: 24, paddingTop: 24 },
-  sectionTitle: { fontSize: 16, fontFamily: "Inter_700Bold", marginBottom: 12, marginTop: 8 },
-  fieldWrap: { marginBottom: 16 },
+  scroll: { paddingHorizontal: 20, paddingTop: 20 },
+
+  stepBadge: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 16,
+  },
+  stepBadgeText: { fontSize: 13, fontFamily: "Inter_700Bold" },
+
+  fieldWrap: { marginBottom: 14 },
   label: { fontSize: 14, fontFamily: "Inter_600SemiBold", marginBottom: 6 },
+  subLabel: { fontSize: 14, fontFamily: "Inter_600SemiBold", marginBottom: 10, marginTop: 4 },
+  helperText: { fontSize: 12, fontFamily: "Inter_400Regular", marginBottom: 10, marginTop: -4 },
   inputWrap: {
     flexDirection: "row",
     alignItems: "center",
@@ -239,6 +424,73 @@ const styles = StyleSheet.create({
   },
   inputIcon: { marginRight: 10 },
   input: { flex: 1, fontSize: 15, fontFamily: "Inter_400Regular" },
+
+  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 16 },
+  chip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 22,
+    borderWidth: 1.5,
+  },
+  chipText: { fontSize: 13, fontFamily: "Inter_500Medium" },
+
+  categoryCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    borderWidth: 1.5,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 10,
+  },
+  catIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  catLabel: { flex: 1, fontSize: 15, fontFamily: "Inter_600SemiBold" },
+
+  availRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1.5,
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 16,
+  },
+  availRowLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
+  availDot: { width: 10, height: 10, borderRadius: 5 },
+  availLabel: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
+
+  daysRow: { flexDirection: "row", gap: 6, marginBottom: 16, flexWrap: "wrap" },
+  dayBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dayTxt: { fontSize: 11, fontFamily: "Inter_700Bold" },
+
+  hoursRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 },
+  hourBlock: { flex: 1 },
+  hourLabel: { fontSize: 12, fontFamily: "Inter_500Medium", marginBottom: 6 },
+  hourInput: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderWidth: 1.5,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 48,
+  },
+  hourText: { flex: 1, fontSize: 15, fontFamily: "Inter_500Medium" },
+  arrowIcon: { marginTop: 20 },
+
   uploadRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -248,13 +500,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     gap: 12,
   },
-  uploadIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  uploadIcon: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   uploadLabel: { flex: 1, fontSize: 14, fontFamily: "Inter_500Medium" },
   uploadStatus: {
     flexDirection: "row",
@@ -265,6 +511,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   uploadStatusText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+
   bankingBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -272,9 +519,10 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderRadius: 14,
     padding: 16,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   bankingBtnText: { flex: 1, fontSize: 15, fontFamily: "Inter_600SemiBold" },
+
   withdrawalRow: { flexDirection: "row", gap: 10, marginBottom: 28 },
   withdrawalBtn: {
     flex: 1,
@@ -285,6 +533,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   withdrawalTxt: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+
   submitBtn: {
     height: 54,
     borderRadius: 16,
@@ -298,4 +547,5 @@ const styles = StyleSheet.create({
   },
   submitBtnText: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#ffffff" },
   disabled: { opacity: 0.6 },
+  sectionTitle: { fontSize: 16, fontFamily: "Inter_700Bold", marginBottom: 12, marginTop: 8 },
 });

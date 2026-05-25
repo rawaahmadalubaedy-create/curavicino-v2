@@ -57,6 +57,7 @@ export default function ProviderProfileScreen() {
   const [selectedService, setSelectedService] = useState("");
   const [notes, setNotes] = useState("");
   const [expandAbout, setExpandAbout] = useState(false);
+  const [duration, setDuration] = useState(2);
 
   const heroTranslate = scrollY.interpolate({
     inputRange: [-HERO_HEIGHT, 0, HERO_HEIGHT],
@@ -105,6 +106,17 @@ export default function ProviderProfileScreen() {
 
   const availColor = AVAIL_COLOR[provider.availabilityStatus];
 
+  /* Commission rates per category */
+  const COMMISSION: Record<string, number> = {
+    "elderly-care": 0.23,
+    "delivery": 0.25,
+    "home-services": 0.22,
+  };
+  const commissionRate = COMMISSION[provider.category] ?? 0.23;
+  const servicePrice = provider.pricePerHour * duration;
+  const commissionAmount = Math.round(servicePrice * commissionRate * 100) / 100;
+  const providerPayout = Math.round((servicePrice - commissionAmount) * 100) / 100;
+
   const handleBook = async () => {
     if (!selectedService) {
       Alert.alert("", "Please select a service.");
@@ -118,14 +130,14 @@ export default function ProviderProfileScreen() {
       status: "pending",
       date: new Date().toLocaleDateString("it-IT"),
       time: "09:00",
-      duration: 2,
-      totalCost: provider.pricePerHour * 2,
+      duration,
+      totalCost: servicePrice,
       notes,
     };
     await addBooking(booking);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setBookingModal(false);
-    Alert.alert("Booking Confirmed", `Your booking with ${provider.name} has been confirmed.`, [
+    Alert.alert(t("bookingConfirmed"), `Your booking with ${provider.name} has been confirmed.`, [
       { text: "View Bookings", onPress: () => router.push("/(tabs)/bookings") },
       { text: "OK" },
     ]);
@@ -474,11 +486,62 @@ export default function ProviderProfileScreen() {
               />
             </View>
 
-            <View style={[styles.priceSummary, { backgroundColor: colors.lightGreen, borderColor: colors.primary + "55" }]}>
-              <Text style={[styles.priceSummaryLabel, { color: colors.subText }]}>Estimated (2 hours)</Text>
-              <Text style={[styles.priceSummaryValue, { color: colors.primary }]}>
-                €{provider.pricePerHour * 2}
-              </Text>
+            {/* Duration selector */}
+            <Text style={[styles.modalLabel, { color: colors.subText }]}>{t("selectDuration")}</Text>
+            <View style={styles.durationRow}>
+              {[1, 2, 3, 4, 6, 8].map((h) => (
+                <TouchableOpacity
+                  key={h}
+                  style={[
+                    styles.durationBtn,
+                    {
+                      backgroundColor: duration === h ? colors.primary : colors.surface,
+                      borderColor: duration === h ? colors.primary : colors.border,
+                    },
+                  ]}
+                  onPress={() => setDuration(h)}
+                >
+                  <Text style={[styles.durationBtnText, { color: duration === h ? "#fff" : colors.darkText }]}>
+                    {h}h
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Financial breakdown */}
+            <View style={[styles.breakdownCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Text style={[styles.breakdownTitle, { color: colors.darkText }]}>{t("financialBreakdown")}</Text>
+
+              <View style={styles.breakdownRow}>
+                <Text style={[styles.breakdownLabel, { color: colors.subText }]}>{t("servicePrice")}</Text>
+                <Text style={[styles.breakdownValue, { color: colors.darkText }]}>€{servicePrice.toFixed(2)}</Text>
+              </View>
+
+              <View style={[styles.breakdownDivider, { backgroundColor: colors.border }]} />
+
+              <View style={styles.breakdownRow}>
+                <View style={styles.breakdownLabelRow}>
+                  <Text style={[styles.breakdownLabel, { color: colors.subText }]}>{t("platformFee")}</Text>
+                  <View style={[styles.feeBadge, { backgroundColor: colors.red + "18" }]}>
+                    <Text style={[styles.feeBadgeText, { color: colors.red }]}>
+                      {Math.round(commissionRate * 100)}%
+                    </Text>
+                  </View>
+                </View>
+                <Text style={[styles.breakdownValue, { color: colors.red }]}>−€{commissionAmount.toFixed(2)}</Text>
+              </View>
+
+              <View style={styles.breakdownRow}>
+                <Text style={[styles.breakdownLabel, { color: colors.subText }]}>{t("providerReceives")}</Text>
+                <Text style={[styles.breakdownValue, { color: colors.darkText }]}>€{providerPayout.toFixed(2)}</Text>
+              </View>
+
+              <View style={[styles.breakdownDivider, { backgroundColor: colors.border }]} />
+
+              <View style={styles.breakdownRow}>
+                <Text style={[styles.breakdownTotalLabel, { color: colors.darkText }]}>{t("youPay")}</Text>
+                <Text style={[styles.breakdownTotal, { color: colors.primary }]}>€{servicePrice.toFixed(2)}</Text>
+              </View>
             </View>
 
             <TouchableOpacity
@@ -828,4 +891,46 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   confirmBtnText: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#fff" },
+
+  /* Duration selector */
+  durationRow: { flexDirection: "row", gap: 8, marginBottom: 16, flexWrap: "wrap" },
+  durationBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 22,
+    borderWidth: 1.5,
+  },
+  durationBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+
+  /* Financial breakdown */
+  breakdownCard: {
+    borderRadius: 16,
+    borderWidth: 1.5,
+    padding: 16,
+    marginBottom: 16,
+    gap: 10,
+  },
+  breakdownTitle: {
+    fontSize: 14,
+    fontFamily: "Inter_700Bold",
+    marginBottom: 4,
+    letterSpacing: 0.2,
+  },
+  breakdownRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  breakdownLabelRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  breakdownLabel: { fontSize: 13, fontFamily: "Inter_400Regular" },
+  breakdownValue: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  breakdownDivider: { height: 1, marginVertical: 2 },
+  feeBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  feeBadgeText: { fontSize: 11, fontFamily: "Inter_700Bold" },
+  breakdownTotalLabel: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  breakdownTotal: { fontSize: 20, fontFamily: "Inter_700Bold" },
 });

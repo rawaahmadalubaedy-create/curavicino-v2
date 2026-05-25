@@ -206,7 +206,7 @@ export default function LoginScreen() {
 
           <View style={styles.registerRow}>
             <Text style={[styles.registerNote, { color: colors.subText }]}>{t("noAccount")} </Text>
-            <TouchableOpacity onPress={() => router.push("/auth/register-type")}>
+            <TouchableOpacity onPress={() => router.push("/auth/customer-register")}>
               <Text style={[styles.registerLink, { color: colors.primary }]}>{t("signUp")}</Text>
             </TouchableOpacity>
           </View>
