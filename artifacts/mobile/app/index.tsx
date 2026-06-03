@@ -1,26 +1,5 @@
-import { router } from "expo-router";
-import React, { useEffect } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { Redirect } from "expo-router";
 
-import { useAuth } from "@/context/AuthContext";
-import { useColors } from "@/hooks/useColors";
-
-export default function IndexScreen() {
-  const { user, isLoading } = useAuth();
-  const colors = useColors();
-
-  useEffect(() => {
-    if (isLoading) return;
-    if (user) {
-      router.replace("/(tabs)/home");
-    } else {
-      router.replace("/auth/welcome");
-    }
-  }, [user, isLoading]);
-
-  return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.primary }}>
-      <ActivityIndicator color="#ffffff" size="large" />
-    </View>
-  );
+export default function Index() {
+  return <Redirect href="/auth/welcome" />;
 }
