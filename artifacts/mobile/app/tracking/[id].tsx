@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { shadow } from "@/utils/shadow";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
@@ -204,11 +205,7 @@ const styles = StyleSheet.create({
   etaText: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#ffffff" },
   infoPanel: {
     padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    ...shadow("#000", 0.1, 8, -2, 5),
   },
   providerRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 20 },
   providerAvatar: { width: 52, height: 52, borderRadius: 26, alignItems: "center", justifyContent: "center" },

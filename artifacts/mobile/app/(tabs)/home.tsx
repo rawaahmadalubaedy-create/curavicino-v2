@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { shadow } from "@/utils/shadow";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -192,11 +193,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: "hidden",
     marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 5,
+    ...shadow("#000", 0.15, 10, 4, 5),
   },
   catImage: { width: "100%", height: "100%", position: "absolute" },
   catOverlay: {

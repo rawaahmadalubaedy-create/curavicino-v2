@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { shadow } from "@/utils/shadow";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import React from "react";
@@ -139,11 +140,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 16,
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 3,
+    ...shadow("#000", 0.08, 12, 4, 3),
   },
   heroWrap: { position: "relative", height: 110 },
   heroImg: { width: "100%", height: "100%", position: "absolute" },

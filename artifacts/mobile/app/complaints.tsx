@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { shadow } from "@/utils/shadow";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -176,11 +177,7 @@ const styles = StyleSheet.create({
     gap: 10,
     height: 54,
     borderRadius: 16,
-    shadowColor: "#CE2B37",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+    ...shadow("#CE2B37", 0.3, 8, 4, 5),
   },
   submitBtnText: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#ffffff" },
   successContainer: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 },

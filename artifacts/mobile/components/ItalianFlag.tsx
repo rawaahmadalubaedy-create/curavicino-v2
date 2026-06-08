@@ -1,4 +1,5 @@
 import React from "react";
+import { shadow } from "@/utils/shadow";
 import { View } from "react-native";
 
 interface Props {
@@ -27,11 +28,7 @@ export function HeartHandsLogo({ size = 60 }: { size?: number }) {
         backgroundColor: "#009246",
         alignItems: "center",
         justifyContent: "center",
-        shadowColor: "#009246",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 8,
+        ...shadow("#009246", 0.3, 8, 4, 8),
       }}
     >
       <View style={{ flexDirection: "row", alignItems: "center" }}>

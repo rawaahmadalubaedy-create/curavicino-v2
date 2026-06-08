@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { shadow } from "@/utils/shadow";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
@@ -149,9 +150,8 @@ export default function ProviderProfileScreen() {
       <Animated.View
         style={[
           styles.stickyHeader,
-          { paddingTop: topPad + 4, backgroundColor: headerBg as any },
+          { paddingTop: topPad + 4, backgroundColor: headerBg as any, pointerEvents: "box-none" },
         ]}
-        pointerEvents="box-none"
       >
         <TouchableOpacity
           style={[styles.backCircle, { backgroundColor: "rgba(0,0,0,0.35)" }]}
@@ -704,11 +704,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: 1,
     padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    ...shadow("#000", 0.05, 8, 2, 2),
   },
   sectionHead: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 14 },
   sectionIconBox: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center" },
@@ -728,11 +724,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     marginLeft: 16,
     marginRight: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
+    ...shadow("#000", 0.1, 6, 2, 3),
   },
   galleryImage: { width: "100%", height: "100%" },
 
@@ -795,11 +787,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 12,
     borderTopWidth: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 10,
+    ...shadow("#000", 0.08, 12, -4, 10),
   },
   ctaIconBtn: {
     width: 48,
@@ -817,11 +805,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    shadowColor: "#009246",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 6,
+    ...shadow("#009246", 0.3, 10, 4, 6),
   },
   ctaBookText: { fontSize: 15, fontFamily: "Inter_700Bold", color: "#fff" },
 
@@ -884,11 +868,7 @@ const styles = StyleSheet.create({
     gap: 10,
     height: 54,
     borderRadius: 16,
-    shadowColor: "#009246",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    ...shadow("#009246", 0.3, 8, 4, 6),
   },
   confirmBtnText: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#fff" },
 

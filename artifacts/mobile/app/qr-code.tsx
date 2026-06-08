@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { shadow } from "@/utils/shadow";
 import { router } from "expo-router";
 import React from "react";
 import {
@@ -121,11 +122,7 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 320,
     marginBottom: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+    ...shadow("#000", 0.08, 12, 4, 4),
   },
   flagBar: { flexDirection: "row", width: 60, height: 10, borderRadius: 5, overflow: "hidden", marginBottom: 16 },
   flagStripe: { flex: 1 },
@@ -155,11 +152,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     paddingVertical: 14,
     borderRadius: 16,
-    shadowColor: "#009246",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+    ...shadow("#009246", 0.3, 8, 4, 5),
   },
   shareBtnText: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#ffffff" },
 });
