@@ -7,6 +7,7 @@ import {
 } from "@expo-google-fonts/inter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
+import Head from "expo-router/head";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -39,6 +40,20 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
+      <Head>
+        <title>CuraVicino — Assistenza Anziani e Servizi a Domicilio</title>
+        <meta
+          name="description"
+          content="CuraVicino mette in contatto famiglie italiane con professionisti verificati per assistenza anziani, consegne a domicilio e servizi domestici. Prenota online in pochi minuti."
+        />
+        <meta name="theme-color" content="#009246" />
+        <meta property="og:title" content="CuraVicino" />
+        <meta
+          property="og:description"
+          content="Assistenza anziani, consegne e servizi domestici con professionisti verificati in Italia."
+        />
+        <meta property="og:type" content="website" />
+      </Head>
       <QueryClientProvider client={queryClient}>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <LanguageProvider>

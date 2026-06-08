@@ -79,3 +79,4 @@ Register with document verification (ID, medical certificate, criminal record), 
 
 - See `.agents/memory/curavicino-stack.md` for architecture decisions worth preserving across sessions
 - See the `pnpm-workspace` skill for workspace structure and TypeScript setup
+run = "pnpm --filter @workspace/mobile run dev"

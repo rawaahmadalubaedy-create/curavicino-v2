@@ -1,7 +1,5 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { Image } from "expo-image";
-import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -40,13 +38,16 @@ export default function LoginScreen() {
       Alert.alert("", t("required"));
       return;
     }
+
     setLoading(true);
+
     try {
       if (mode === "email") await login(email, password);
       else await loginWithPhone(phone);
+
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace("/(tabs)/home");
-    } catch {
+    } catch (e) {
       Alert.alert("Error", "Login failed. Please try again.");
     } finally {
       setLoading(false);
@@ -55,9 +56,11 @@ export default function LoginScreen() {
 
   const handleSocial = async (method: "google" | "facebook") => {
     setLoading(true);
+
     try {
       if (method === "google") await loginWithGoogle();
       else await loginWithFacebook();
+
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace("/(tabs)/home");
     } finally {
@@ -67,147 +70,124 @@ export default function LoginScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <LinearGradient
-        colors={["#009246", "#007a3a", colors.background]}
-        locations={[0, 0.55, 1]}
-        style={[styles.headerGrad, { paddingTop: insets.top + 24 }]}
-      >
-        <View style={styles.logoWrap}>
-          <Image
-            source={require("@/assets/images/icon.png")}
-            style={styles.logoImage}
-            contentFit="contain"
-          />
+      {/* HEADER ثابت بدون LinearGradient */}
+      <View style={[styles.header, { paddingTop: insets.top + 24 }]}>
+        <View style={styles.logo}>
+          <Feather name="heart" size={34} color="#fff" />
         </View>
-        <Text style={styles.appName}>CuraVicino</Text>
-        <Text style={styles.slogan}>{t("appSlogan")}</Text>
-      </LinearGradient>
+
+        <Text style={styles.title}>CuraVicino</Text>
+        <Text style={styles.subtitle}>{t("appSlogan")}</Text>
+      </View>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={styles.flex}
+        style={{ flex: 1 }}
       >
         <ScrollView
-          contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 24 }]}
-          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            padding: 24,
+            paddingBottom: insets.bottom + 24,
+          }}
           keyboardShouldPersistTaps="handled"
         >
-          <Text style={[styles.heading, { color: colors.darkText }]}>{t("signIn")}</Text>
+          <Text style={[styles.heading, { color: colors.darkText }]}>
+            {t("signIn")}
+          </Text>
 
-          <View style={[styles.modeToggle, { backgroundColor: colors.muted }]}>
+          {/* MODE SWITCH */}
+          <View style={[styles.switch, { backgroundColor: colors.muted }]}>
             <TouchableOpacity
-              style={[styles.modeBtn, mode === "email" && { backgroundColor: colors.primary }]}
+              style={[
+                styles.switchBtn,
+                mode === "email" && { backgroundColor: colors.primary },
+              ]}
               onPress={() => setMode("email")}
             >
-              <Text style={[styles.modeTxt, { color: mode === "email" ? "#fff" : colors.subText }]}>
+              <Text
+                style={{
+                  color: mode === "email" ? "#fff" : colors.subText,
+                }}
+              >
                 {t("email")}
               </Text>
             </TouchableOpacity>
+
             <TouchableOpacity
-              style={[styles.modeBtn, mode === "phone" && { backgroundColor: colors.primary }]}
+              style={[
+                styles.switchBtn,
+                mode === "phone" && { backgroundColor: colors.primary },
+              ]}
               onPress={() => setMode("phone")}
             >
-              <Text style={[styles.modeTxt, { color: mode === "phone" ? "#fff" : colors.subText }]}>
+              <Text
+                style={{
+                  color: mode === "phone" ? "#fff" : colors.subText,
+                }}
+              >
                 {t("phone")}
               </Text>
             </TouchableOpacity>
           </View>
 
+          {/* INPUTS */}
           {mode === "email" ? (
             <>
-              <View style={[styles.inputWrap, { borderColor: colors.border, backgroundColor: colors.surface }]}>
-                <Feather name="mail" size={18} color={colors.subText} style={styles.inputIcon} />
-                <TextInput
-                  style={[styles.input, { color: colors.darkText }]}
-                  placeholder={t("email")}
-                  placeholderTextColor={colors.mutedForeground}
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-              </View>
-              <View style={[styles.inputWrap, { borderColor: colors.border, backgroundColor: colors.surface }]}>
-                <Feather name="lock" size={18} color={colors.subText} style={styles.inputIcon} />
-                <TextInput
-                  style={[styles.input, { color: colors.darkText }]}
-                  placeholder={t("password")}
-                  placeholderTextColor={colors.mutedForeground}
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPass}
-                />
-                <TouchableOpacity onPress={() => setShowPass(!showPass)} style={styles.eyeBtn}>
-                  <Feather name={showPass ? "eye-off" : "eye"} size={18} color={colors.subText} />
-                </TouchableOpacity>
-              </View>
-              <TouchableOpacity style={styles.forgotWrap}>
-                <Text style={[styles.forgot, { color: colors.primary }]}>{t("forgotPassword")}</Text>
-              </TouchableOpacity>
+              <TextInput
+                style={[styles.input, { borderColor: colors.border }]}
+                placeholder={t("email")}
+                value={email}
+                onChangeText={setEmail}
+              />
+
+              <TextInput
+                style={[styles.input, { borderColor: colors.border }]}
+                placeholder={t("password")}
+                value={password}
+                secureTextEntry={!showPass}
+                onChangeText={setPassword}
+              />
             </>
           ) : (
-            <View style={[styles.inputWrap, { borderColor: colors.border, backgroundColor: colors.surface }]}>
-              <Feather name="phone" size={18} color={colors.subText} style={styles.inputIcon} />
-              <TextInput
-                style={[styles.input, { color: colors.darkText }]}
-                placeholder="+39 000 000 0000"
-                placeholderTextColor={colors.mutedForeground}
-                value={phone}
-                onChangeText={setPhone}
-                keyboardType="phone-pad"
-              />
-            </View>
+            <TextInput
+              style={[styles.input, { borderColor: colors.border }]}
+              placeholder="+39..."
+              value={phone}
+              onChangeText={setPhone}
+            />
           )}
 
+          {/* LOGIN BUTTON */}
           <TouchableOpacity
-            style={[styles.loginBtn, { backgroundColor: colors.primary }, loading && styles.disabled]}
+            style={[styles.btn, { backgroundColor: colors.primary }]}
             onPress={handleLogin}
             disabled={loading}
-            activeOpacity={0.85}
           >
             {loading ? (
-              <ActivityIndicator color="#ffffff" size="small" />
+              <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.loginBtnText}>{t("signIn")}</Text>
+              <Text style={{ color: "#fff", fontWeight: "700" }}>
+                {t("signIn")}
+              </Text>
             )}
           </TouchableOpacity>
 
-          <View style={styles.dividerRow}>
-            <View style={[styles.line, { backgroundColor: colors.border }]} />
-            <Text style={[styles.dividerText, { color: colors.subText }]}>{t("orEmail")}</Text>
-            <View style={[styles.line, { backgroundColor: colors.border }]} />
-          </View>
-
-          <View style={styles.socialRow}>
+          {/* SOCIAL */}
+          <View style={styles.row}>
             <TouchableOpacity
-              style={[styles.socialBtn, { borderColor: colors.border, backgroundColor: colors.surface }]}
+              style={styles.social}
               onPress={() => handleSocial("google")}
-              activeOpacity={0.8}
-              disabled={loading}
             >
-              <View style={[styles.socialIconBg, { backgroundColor: "#DB4437" + "18" }]}>
-                <Feather name="globe" size={17} color="#DB4437" />
-              </View>
-              <Text style={[styles.socialText, { color: colors.darkText }]}>{t("google")}</Text>
+              <Feather name="globe" size={18} />
+              <Text>Google</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.socialBtn, { borderColor: colors.border, backgroundColor: colors.surface }]}
-              onPress={() => handleSocial("facebook")}
-              activeOpacity={0.8}
-              disabled={loading}
-            >
-              <View style={[styles.socialIconBg, { backgroundColor: "#1877F2" + "18" }]}>
-                <Feather name="facebook" size={17} color="#1877F2" />
-              </View>
-              <Text style={[styles.socialText, { color: colors.darkText }]}>{t("facebook")}</Text>
-            </TouchableOpacity>
-          </View>
 
-          <View style={styles.registerRow}>
-            <Text style={[styles.registerNote, { color: colors.subText }]}>{t("noAccount")} </Text>
-            <TouchableOpacity onPress={() => router.push("/auth/customer-register")}>
-              <Text style={[styles.registerLink, { color: colors.primary }]}>{t("signUp")}</Text>
+            <TouchableOpacity
+              style={styles.social}
+              onPress={() => handleSocial("facebook")}
+            >
+              <Feather name="facebook" size={18} />
+              <Text>Facebook</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -218,99 +198,69 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  flex: { flex: 1 },
-  headerGrad: {
-    paddingHorizontal: 24,
-    paddingBottom: 36,
+
+  header: {
+    backgroundColor: "#009246",
     alignItems: "center",
+    paddingBottom: 30,
   },
-  logoWrap: {
-    width: 80,
-    height: 80,
-    borderRadius: 22,
-    overflow: "hidden",
-    marginBottom: 14,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 6,
+
+  logo: {
+    width: 70,
+    height: 70,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
   },
-  logoImage: { width: 80, height: 80 },
-  appName: {
-    fontSize: 30,
-    fontFamily: "Inter_700Bold",
-    color: "#ffffff",
-    marginBottom: 4,
-    letterSpacing: -0.5,
-  },
-  slogan: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    color: "rgba(255,255,255,0.88)",
-    letterSpacing: 0.2,
-  },
-  scroll: { paddingHorizontal: 24, paddingTop: 28 },
-  heading: { fontSize: 26, fontFamily: "Inter_700Bold", marginBottom: 20 },
-  modeToggle: {
+
+  title: { color: "#fff", fontSize: 26, fontWeight: "700" },
+  subtitle: { color: "#fff", fontSize: 13 },
+
+  heading: { fontSize: 22, marginBottom: 20, fontWeight: "700" },
+
+  switch: {
     flexDirection: "row",
-    borderRadius: 12,
+    borderRadius: 10,
     padding: 4,
     marginBottom: 20,
   },
-  modeBtn: { flex: 1, paddingVertical: 9, borderRadius: 10, alignItems: "center" },
-  modeTxt: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
-  inputWrap: {
+
+  switchBtn: {
+    flex: 1,
+    padding: 10,
+    alignItems: "center",
+    borderRadius: 8,
+  },
+
+  input: {
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 12,
+  },
+
+  btn: {
+    padding: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 10,
+  },
+
+  row: {
     flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1.5,
-    borderRadius: 14,
-    marginBottom: 14,
-    paddingHorizontal: 14,
-    height: 54,
+    gap: 10,
+    marginTop: 20,
   },
-  inputIcon: { marginRight: 10 },
-  input: { flex: 1, fontSize: 15, fontFamily: "Inter_400Regular" },
-  eyeBtn: { padding: 4 },
-  forgotWrap: { alignItems: "flex-end", marginBottom: 20 },
-  forgot: { fontSize: 13, fontFamily: "Inter_500Medium" },
-  loginBtn: {
-    height: 54,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 24,
-    shadowColor: "#009246",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  loginBtnText: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#ffffff" },
-  disabled: { opacity: 0.65 },
-  dividerRow: { flexDirection: "row", alignItems: "center", marginBottom: 20, gap: 10 },
-  line: { flex: 1, height: 1 },
-  dividerText: { fontSize: 13, fontFamily: "Inter_400Regular" },
-  socialRow: { flexDirection: "row", gap: 12, marginBottom: 28 },
-  socialBtn: {
+
+  social: {
     flex: 1,
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    height: 50,
-    borderRadius: 14,
-    borderWidth: 1.5,
-  },
-  socialIconBg: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    alignItems: "center",
+    gap: 6,
+    padding: 12,
+    borderWidth: 1,
+    borderRadius: 10,
     justifyContent: "center",
   },
-  socialText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
-  registerRow: { flexDirection: "row", justifyContent: "center" },
-  registerNote: { fontSize: 14, fontFamily: "Inter_400Regular" },
-  registerLink: { fontSize: 14, fontFamily: "Inter_700Bold" },
 });
