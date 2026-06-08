@@ -16,14 +16,24 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "@/context/AuthContext";
 import { useLang } from "@/context/LanguageContext";
+import { useRealtime } from "@/context/RealtimeContext";
 import { useColors } from "@/hooks/useColors";
+
+const STATUS_COLOR: Record<string, string> = {
+  connected:    "#22c55e",
+  connecting:   "#f59e0b",
+  disconnected: "#9ca3af",
+  error:        "#CE2B37",
+};
 
 export default function ProfileScreen() {
   const colors = useColors();
   const { t, lang, setLang } = useLang();
   const { user, logout } = useAuth();
+  const { status } = useRealtime();
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const dotColor = STATUS_COLOR[status] ?? "#9ca3af";
 
   const handleLogout = () => {
     Alert.alert(t("logout"), "Are you sure you want to log out?", [
@@ -89,6 +99,8 @@ export default function ProfileScreen() {
               {user?.fullName?.split(" ").map((n) => n[0]).join("").slice(0, 2) ?? "?"}
             </Text>
           </View>
+          {/* Connection status dot — bottom-left of avatar */}
+          <View style={[styles.statusDot, { backgroundColor: dotColor, borderColor: "#009246" }]} />
           {user?.isVerified && (
             <View style={[styles.verifiedBadge, { backgroundColor: "#ffffff" }]}>
               <Feather name="check-circle" size={14} color={colors.primary} />
@@ -173,6 +185,15 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.5)",
   },
   avatarText: { fontSize: 30, fontFamily: "Inter_700Bold", color: "#ffffff" },
+  statusDot: {
+    position: "absolute",
+    bottom: 2,
+    left: 2,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 2.5,
+  },
   verifiedBadge: {
     position: "absolute",
     bottom: 0,
