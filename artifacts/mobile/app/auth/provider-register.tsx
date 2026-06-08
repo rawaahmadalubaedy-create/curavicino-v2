@@ -31,32 +31,111 @@ const SERVICE_CATEGORIES = [
 ];
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   InputField — hoisted to MODULE scope so its identity is stable across renders.
+   Defining it inside the screen function would create a new component type on
+   every render, causing React to unmount/remount the TextInput and lose focus.
+───────────────────────────────────────────────────────────────────────────── */
+function InputField({
+  label,
+  value,
+  onChange,
+  icon,
+  keyboard = "default",
+  placeholder = "",
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  icon: string;
+  keyboard?: any;
+  placeholder?: string;
+}) {
+  const colors = useColors();
+  return (
+    <View style={styles.fieldWrap}>
+      <Text style={[styles.label, { color: colors.darkText }]}>{label}</Text>
+      <View style={[styles.inputWrap, { borderColor: colors.border, backgroundColor: colors.surface }]}>
+        <Feather name={icon as any} size={18} color={colors.subText} style={styles.inputIcon} />
+        <TextInput
+          style={[styles.input, { color: colors.darkText }]}
+          value={value}
+          onChangeText={onChange}
+          keyboardType={keyboard}
+          placeholder={placeholder || label}
+          placeholderTextColor={colors.mutedForeground}
+          autoCapitalize={keyboard === "email-address" ? "none" : "words"}
+        />
+      </View>
+    </View>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   UploadRow — also hoisted to MODULE scope for the same reason.
+───────────────────────────────────────────────────────────────────────────── */
+function UploadRow({
+  label,
+  icon,
+  uploaded,
+  onUpload,
+}: {
+  label: string;
+  icon: string;
+  uploaded: boolean;
+  onUpload: () => void;
+}) {
+  const colors = useColors();
+  const { t } = useLang();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.uploadRow,
+        {
+          borderColor: uploaded ? colors.primary : colors.border,
+          backgroundColor: uploaded ? colors.lightGreen : colors.surface,
+        },
+      ]}
+      onPress={onUpload}
+      activeOpacity={0.8}
+    >
+      <View style={[styles.uploadIcon, { backgroundColor: uploaded ? colors.primary : colors.muted }]}>
+        <Feather name={icon as any} size={18} color={uploaded ? "#fff" : colors.subText} />
+      </View>
+      <Text style={[styles.uploadLabel, { color: colors.darkText }]}>{label}</Text>
+      <View style={[styles.uploadStatus, { backgroundColor: uploaded ? colors.primary : "#f0f0f0" }]}>
+        <Feather name={uploaded ? "check" : "upload"} size={14} color={uploaded ? "#fff" : colors.subText} />
+        <Text style={[styles.uploadStatusText, { color: uploaded ? "#fff" : colors.subText }]}>
+          {uploaded ? t("uploaded") : t("tapToUpload")}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Screen
+───────────────────────────────────────────────────────────────────────────── */
 export default function ProviderRegisterScreen() {
   const colors = useColors();
   const { t } = useLang();
   const insets = useSafeAreaInsets();
   const { registerProvider } = useAuth();
 
-  /* ── Basic info ───────────────────────────────────────────────────────────── */
   const [fullName, setFullName] = useState("");
   const [age, setAge] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
 
-  /* ── Languages ────────────────────────────────────────────────────────────── */
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(["Italian"]);
-
-  /* ── Service categories ───────────────────────────────────────────────────── */
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  /* ── Availability ─────────────────────────────────────────────────────────── */
   const [workingDays, setWorkingDays] = useState<string[]>(["Mon", "Tue", "Wed", "Thu", "Fri"]);
   const [hoursFrom, setHoursFrom] = useState("08:00");
   const [hoursTo, setHoursTo] = useState("18:00");
   const [isOnline, setIsOnline] = useState(true);
 
-  /* ── Documents & withdrawal ───────────────────────────────────────────────── */
   const [uploads, setUploads] = useState<Record<string, boolean>>({
     id: false,
     medical: false,
@@ -66,7 +145,6 @@ export default function ProviderRegisterScreen() {
   const [withdrawal, setWithdrawal] = useState<Withdrawal>("weekly");
   const [loading, setLoading] = useState(false);
 
-  /* ── Helpers ──────────────────────────────────────────────────────────────── */
   const toggleItem = (arr: string[], item: string, setArr: (v: string[]) => void) => {
     setArr(arr.includes(item) ? arr.filter((i) => i !== item) : [...arr, item]);
   };
@@ -108,64 +186,6 @@ export default function ProviderRegisterScreen() {
       setLoading(false);
     }
   };
-
-  /* ── Subcomponents ────────────────────────────────────────────────────────── */
-  const InputField = ({
-    label,
-    value,
-    onChange,
-    icon,
-    keyboard = "default",
-    placeholder = "",
-  }: {
-    label: string;
-    value: string;
-    onChange: (v: string) => void;
-    icon: string;
-    keyboard?: any;
-    placeholder?: string;
-  }) => (
-    <View style={styles.fieldWrap}>
-      <Text style={[styles.label, { color: colors.darkText }]}>{label}</Text>
-      <View style={[styles.inputWrap, { borderColor: colors.border, backgroundColor: colors.surface }]}>
-        <Feather name={icon as any} size={18} color={colors.subText} style={styles.inputIcon} />
-        <TextInput
-          style={[styles.input, { color: colors.darkText }]}
-          value={value}
-          onChangeText={onChange}
-          keyboardType={keyboard}
-          placeholder={placeholder || label}
-          placeholderTextColor={colors.mutedForeground}
-          autoCapitalize={keyboard === "email-address" ? "none" : "words"}
-        />
-      </View>
-    </View>
-  );
-
-  const UploadRow = ({ docKey, label, icon }: { docKey: string; label: string; icon: string }) => (
-    <TouchableOpacity
-      style={[
-        styles.uploadRow,
-        {
-          borderColor: uploads[docKey] ? colors.primary : colors.border,
-          backgroundColor: uploads[docKey] ? colors.lightGreen : colors.surface,
-        },
-      ]}
-      onPress={() => handleUpload(docKey)}
-      activeOpacity={0.8}
-    >
-      <View style={[styles.uploadIcon, { backgroundColor: uploads[docKey] ? colors.primary : colors.muted }]}>
-        <Feather name={icon as any} size={18} color={uploads[docKey] ? "#fff" : colors.subText} />
-      </View>
-      <Text style={[styles.uploadLabel, { color: colors.darkText }]}>{label}</Text>
-      <View style={[styles.uploadStatus, { backgroundColor: uploads[docKey] ? colors.primary : "#f0f0f0" }]}>
-        <Feather name={uploads[docKey] ? "check" : "upload"} size={14} color={uploads[docKey] ? "#fff" : colors.subText} />
-        <Text style={[styles.uploadStatusText, { color: uploads[docKey] ? "#fff" : colors.subText }]}>
-          {uploads[docKey] ? t("uploaded") : t("tapToUpload")}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -255,7 +275,6 @@ export default function ProviderRegisterScreen() {
           <Text style={[styles.stepBadgeText, { color: colors.red }]}>4 — {t("availabilitySetup")}</Text>
         </View>
 
-        {/* Online toggle */}
         <View style={[styles.availRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={styles.availRowLeft}>
             <View style={[styles.availDot, { backgroundColor: isOnline ? "#009246" : "#999" }]} />
@@ -271,7 +290,6 @@ export default function ProviderRegisterScreen() {
           />
         </View>
 
-        {/* Working days */}
         <Text style={[styles.subLabel, { color: colors.darkText }]}>{t("workingDays")}</Text>
         <View style={styles.daysRow}>
           {DAYS.map((day) => {
@@ -294,7 +312,6 @@ export default function ProviderRegisterScreen() {
           })}
         </View>
 
-        {/* Working hours */}
         <Text style={[styles.subLabel, { color: colors.darkText }]}>{t("workingHours")}</Text>
         <View style={styles.hoursRow}>
           <View style={styles.hourBlock}>
@@ -333,10 +350,30 @@ export default function ProviderRegisterScreen() {
           <Text style={[styles.stepBadgeText, { color: colors.red }]}>5 — {t("verificationDocs")}</Text>
         </View>
 
-        <UploadRow docKey="id" label={t("uploadId")} icon="credit-card" />
-        <UploadRow docKey="medical" label={t("uploadMedical")} icon="activity" />
-        <UploadRow docKey="criminal" label={t("uploadCriminal")} icon="shield" />
-        <UploadRow docKey="photo" label={t("uploadPhoto")} icon="camera" />
+        <UploadRow
+          label={t("uploadId")}
+          icon="credit-card"
+          uploaded={uploads.id}
+          onUpload={() => handleUpload("id")}
+        />
+        <UploadRow
+          label={t("uploadMedical")}
+          icon="activity"
+          uploaded={uploads.medical}
+          onUpload={() => handleUpload("medical")}
+        />
+        <UploadRow
+          label={t("uploadCriminal")}
+          icon="shield"
+          uploaded={uploads.criminal}
+          onUpload={() => handleUpload("criminal")}
+        />
+        <UploadRow
+          label={t("uploadPhoto")}
+          icon="camera"
+          uploaded={uploads.photo}
+          onUpload={() => handleUpload("photo")}
+        />
 
         {/* Banking */}
         <Text style={[styles.subLabel, { color: colors.darkText }]}>{t("linkBanking")}</Text>
