@@ -161,6 +161,9 @@ export default function ProviderRegisterScreen() {
   };
 
   const handleRegister = async () => {
+    if (loading) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
     if (!fullName || !phone) {
       Alert.alert("", t("required"));
       return;

@@ -34,6 +34,9 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
+    if (loading) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
     if (mode === "email" && !email) {
       Alert.alert("", t("required"));
       return;
@@ -55,6 +58,9 @@ export default function LoginScreen() {
   };
 
   const handleSocial = async (method: "google" | "facebook") => {
+    if (loading) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
     setLoading(true);
 
     try {
@@ -177,6 +183,7 @@ export default function LoginScreen() {
             <TouchableOpacity
               style={styles.social}
               onPress={() => handleSocial("google")}
+              disabled={loading}
             >
               <Feather name="globe" size={18} />
               <Text>Google</Text>
@@ -185,6 +192,7 @@ export default function LoginScreen() {
             <TouchableOpacity
               style={styles.social}
               onPress={() => handleSocial("facebook")}
+              disabled={loading}
             >
               <Feather name="facebook" size={18} />
               <Text>Facebook</Text>

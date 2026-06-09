@@ -1,7 +1,8 @@
 import { Feather } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Dimensions,
   Image,
@@ -98,6 +99,23 @@ export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const botPad = Platform.OS === "web" ? 34 : insets.bottom;
+
+  /* Double-tap guard — prevents rapid repeat taps on CTAs. Self-resets so
+     re-entering the screen (e.g. back from provider-register) re-enables taps. */
+  const lock = useRef(false);
+  const [busy, setBusy] = useState(false);
+
+  const go = useCallback((nav: () => void) => {
+    if (lock.current) return;
+    lock.current = true;
+    setBusy(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    nav();
+    setTimeout(() => {
+      lock.current = false;
+      setBusy(false);
+    }, 800);
+  }, []);
 
   /* Shared animation values */
   const headerOp = useSharedValue(0);
@@ -225,7 +243,8 @@ export default function WelcomeScreen() {
         {/* Customer CTA */}
         <TouchableOpacity
           style={s.btnGreen}
-          onPress={() => router.push("/auth/login")}
+          onPress={() => go(() => router.push("/auth/login"))}
+          disabled={busy}
           activeOpacity={0.88}
         >
           <LinearGradient
@@ -243,7 +262,8 @@ export default function WelcomeScreen() {
         {/* Provider CTA */}
         <TouchableOpacity
           style={s.btnOutline}
-          onPress={() => router.push("/auth/provider-register")}
+          onPress={() => go(() => router.push("/auth/provider-register"))}
+          disabled={busy}
           activeOpacity={0.88}
         >
           <Feather name="briefcase" size={19} color="#CE2B37" />
@@ -254,7 +274,8 @@ export default function WelcomeScreen() {
         {/* Sign-in link */}
         <TouchableOpacity
           style={s.signinRow}
-          onPress={() => router.push("/auth/login")}
+          onPress={() => go(() => router.push("/auth/login"))}
+          disabled={busy}
           activeOpacity={0.7}
         >
           <Text style={s.signinNote}>{t("haveAccount")} </Text>
