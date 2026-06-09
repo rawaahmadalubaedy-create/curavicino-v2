@@ -129,6 +129,15 @@ export default function WelcomeScreen() {
     panelTY.value  = withDelay(560, withSpring(0, { damping: 16, stiffness: 110 }));
   }, []);
 
+  /* Auto-redirect fallback — navigate to login after 6s of inactivity */
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      router.replace("/auth/login");
+    }, 6000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   const headerStyle = useAnimatedStyle(() => ({
     opacity: headerOp.value,
     transform: [{ translateY: headerTY.value }],
