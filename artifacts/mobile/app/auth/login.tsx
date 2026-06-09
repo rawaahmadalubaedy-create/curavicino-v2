@@ -50,8 +50,8 @@ export default function LoginScreen() {
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace("/(tabs)/home");
-    } catch (e) {
-      Alert.alert("Error", "Login failed. Please try again.");
+    } catch (e: any) {
+      Alert.alert("", e?.status ? t("loginFailed") : t("connectionError"));
     } finally {
       setLoading(false);
     }
@@ -69,6 +69,8 @@ export default function LoginScreen() {
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace("/(tabs)/home");
+    } catch (e: any) {
+      Alert.alert("", e?.status ? t("loginFailed") : t("connectionError"));
     } finally {
       setLoading(false);
     }

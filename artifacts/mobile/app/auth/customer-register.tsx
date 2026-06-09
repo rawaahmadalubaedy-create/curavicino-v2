@@ -51,6 +51,8 @@ export default function CustomerRegisterScreen() {
       Alert.alert("", t("registerSuccess"), [
         { text: "OK", onPress: () => router.replace("/(tabs)/home") },
       ]);
+    } catch (e: any) {
+      Alert.alert("", e?.status ? t("registerFailed") : t("connectionError"));
     } finally {
       setLoading(false);
     }

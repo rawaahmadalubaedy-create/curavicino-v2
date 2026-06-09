@@ -2,11 +2,19 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
 
 /* ─── Base URL ─────────────────────────────────────────────────────────────── */
+/* The backend is always reached over the public Replit domain (injected at bundle
+   time by the Expo dev/build scripts as EXPO_PUBLIC_DOMAIN). We never fall back to
+   localhost — a device or web client cannot resolve the server's localhost, which
+   previously caused every request to fail silently into mock/demo mode. */
 function getBaseUrl(): string {
   const domain = process.env.EXPO_PUBLIC_DOMAIN;
-  if (domain) return `https://${domain}/api`;
-  /* Expo Go on device falls back to the Metro host which is wired by the workflow */
-  return "http://localhost:80/api";
+  if (!domain) {
+    throw new Error(
+      "EXPO_PUBLIC_DOMAIN is not set. The mobile app cannot determine the API URL. " +
+        "Ensure the Expo workflow injects EXPO_PUBLIC_DOMAIN (it is wired by the dev/build scripts)."
+    );
+  }
+  return `https://${domain}/api`;
 }
 
 export const API_BASE = getBaseUrl();

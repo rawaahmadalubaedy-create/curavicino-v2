@@ -62,22 +62,6 @@ function generateId(): string {
   return Date.now().toString() + Math.random().toString(36).substr(2, 9);
 }
 
-/* Fallback mock when API is unreachable (demo / offline mode) */
-function mockUser(overrides: Partial<User>): User {
-  return {
-    id: generateId(),
-    fullName: overrides.fullName ?? "Mario Rossi",
-    email: overrides.email ?? "demo@curavicino.it",
-    phone: overrides.phone ?? "+39 345 678 9012",
-    userType: overrides.userType ?? "customer",
-    age: overrides.age ?? 45,
-    address: overrides.address ?? "Via Roma 1, Milano",
-    isVerified: true,
-    rating: 4.8,
-    ...overrides,
-  };
-}
-
 /* ─── Context ────────────────────────────────────────────────────────────────── */
 const AuthContext = createContext<AuthContextType>({
   user: null,
@@ -134,116 +118,75 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   /* ── Login ───────────────────────────────────────────────────────────────────── */
   const login = async (email: string, password: string) => {
-    try {
-      const apiUser = await AuthService.login(email, password);
-      await saveUser(apiUserToUser(apiUser));
-      realtimeClient.connect().catch(() => {});
-    } catch (err: any) {
-      /* If API unreachable (network error), fall back to demo mode */
-      if (!err?.status) {
-        const u = mockUser({ email, userType: "customer" });
-        await saveUser(u);
-        return;
-      }
-      throw err;
-    }
+    const apiUser = await AuthService.login(email, password);
+    await saveUser(apiUserToUser(apiUser));
+    realtimeClient.connect().catch(() => {});
   };
 
-  /* ── Social Login (mock-backed, registers in DB with random password) ────────── */
+  /* ── Social Login (registers a real DB account with a random password) ────────── */
   const loginWithGoogle = async () => {
     const email = `google_${generateId()}@curavicino.it`;
-    try {
-      const apiUser = await AuthService.registerCustomer({
-        email,
-        password: generateId(),
-        fullName: "Marco Bianchi",
-        phone: "+39 348 123 4567",
-      });
-      await saveUser(apiUserToUser(apiUser));
-      realtimeClient.connect().catch(() => {});
-    } catch {
-      await saveUser(mockUser({ fullName: "Marco Bianchi", email, userType: "customer" }));
-    }
+    const apiUser = await AuthService.registerCustomer({
+      email,
+      password: generateId(),
+      fullName: "Marco Bianchi",
+      phone: "+39 348 123 4567",
+    });
+    await saveUser(apiUserToUser(apiUser));
+    realtimeClient.connect().catch(() => {});
   };
 
   const loginWithFacebook = async () => {
     const email = `fb_${generateId()}@curavicino.it`;
-    try {
-      const apiUser = await AuthService.registerCustomer({
-        email,
-        password: generateId(),
-        fullName: "Giulia Ferrari",
-        phone: "+39 340 987 6543",
-      });
-      await saveUser(apiUserToUser(apiUser));
-      realtimeClient.connect().catch(() => {});
-    } catch {
-      await saveUser(mockUser({ fullName: "Giulia Ferrari", email, userType: "customer" }));
-    }
+    const apiUser = await AuthService.registerCustomer({
+      email,
+      password: generateId(),
+      fullName: "Giulia Ferrari",
+      phone: "+39 340 987 6543",
+    });
+    await saveUser(apiUserToUser(apiUser));
+    realtimeClient.connect().catch(() => {});
   };
 
   const loginWithPhone = async (phone: string) => {
     const email = `phone_${generateId()}@curavicino.it`;
-    try {
-      const apiUser = await AuthService.registerCustomer({
-        email,
-        password: generateId(),
-        fullName: "Luca Verdi",
-        phone,
-      });
-      await saveUser(apiUserToUser(apiUser));
-      realtimeClient.connect().catch(() => {});
-    } catch {
-      await saveUser(mockUser({ fullName: "Luca Verdi", phone, userType: "customer" }));
-    }
+    const apiUser = await AuthService.registerCustomer({
+      email,
+      password: generateId(),
+      fullName: "Luca Verdi",
+      phone,
+    });
+    await saveUser(apiUserToUser(apiUser));
+    realtimeClient.connect().catch(() => {});
   };
 
   /* ── Register ─────────────────────────────────────────────────────────────────── */
   const registerCustomer = async (data: Partial<User> & { password?: string }) => {
-    try {
-      const apiUser = await AuthService.registerCustomer({
-        email: data.email ?? `user_${generateId()}@curavicino.it`,
-        password: data.password ?? generateId(),
-        fullName: data.fullName ?? "",
-        phone: data.phone ?? "",
-        age: data.age,
-        address: data.address,
-        forFamilyMember: data.forFamilyMember,
-      });
-      await saveUser(apiUserToUser(apiUser));
-      realtimeClient.connect().catch(() => {});
-    } catch (err: any) {
-      if (!err?.status) {
-        /* Network error → offline demo */
-        await saveUser(mockUser({ ...data, userType: "customer", isVerified: true }));
-        return;
-      }
-      throw err;
-    }
+    const apiUser = await AuthService.registerCustomer({
+      email: data.email ?? `user_${generateId()}@curavicino.it`,
+      password: data.password ?? generateId(),
+      fullName: data.fullName ?? "",
+      phone: data.phone ?? "",
+      age: data.age,
+      address: data.address,
+      forFamilyMember: data.forFamilyMember,
+    });
+    await saveUser(apiUserToUser(apiUser));
+    realtimeClient.connect().catch(() => {});
   };
 
   const registerProvider = async (data: Partial<User> & { password?: string }) => {
-    try {
-      const apiUser = await AuthService.registerProvider({
-        email: data.email ?? `provider_${generateId()}@curavicino.it`,
-        password: data.password ?? generateId(),
-        fullName: data.fullName ?? "",
-        phone: data.phone ?? "",
-        withdrawalPreference: data.withdrawalPreference,
-      });
-      const u = apiUserToUser(apiUser);
-      u.qrCode = generateId();
-      await saveUser(u);
-      realtimeClient.connect().catch(() => {});
-    } catch (err: any) {
-      if (!err?.status) {
-        await saveUser(
-          mockUser({ ...data, userType: "provider", isVerified: false, qrCode: generateId() })
-        );
-        return;
-      }
-      throw err;
-    }
+    const apiUser = await AuthService.registerProvider({
+      email: data.email ?? `provider_${generateId()}@curavicino.it`,
+      password: data.password ?? generateId(),
+      fullName: data.fullName ?? "",
+      phone: data.phone ?? "",
+      withdrawalPreference: data.withdrawalPreference,
+    });
+    const u = apiUserToUser(apiUser);
+    u.qrCode = generateId();
+    await saveUser(u);
+    realtimeClient.connect().catch(() => {});
   };
 
   /* ── Logout ──────────────────────────────────────────────────────────────────── */

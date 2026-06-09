@@ -185,6 +185,8 @@ export default function ProviderRegisterScreen() {
       Alert.alert("", t("providerVerification"), [
         { text: "OK", onPress: () => router.replace("/(tabs)/home") },
       ]);
+    } catch (e: any) {
+      Alert.alert("", e?.status ? t("registerFailed") : t("connectionError"));
     } finally {
       setLoading(false);
     }

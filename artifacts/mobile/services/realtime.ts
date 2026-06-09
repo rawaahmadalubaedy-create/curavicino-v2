@@ -102,10 +102,13 @@ class RealtimeClient {
     }
 
     const domain = process.env.EXPO_PUBLIC_DOMAIN;
-    const wsBase = domain
-      ? `wss://${domain}/api/ws`
-      : "ws://localhost:80/api/ws";
-    const url = `${wsBase}?token=${encodeURIComponent(token)}`;
+    if (!domain) {
+      /* No public domain → cannot reach the realtime server. Never fall back to
+         localhost (unreachable from a device/web client). */
+      this.setStatus("disconnected");
+      return;
+    }
+    const url = `wss://${domain}/api/ws?token=${encodeURIComponent(token)}`;
 
     let ws: WebSocket;
     try {
