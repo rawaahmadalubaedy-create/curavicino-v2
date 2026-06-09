@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import {
   Dimensions,
   Image,
@@ -75,7 +75,7 @@ function GpsPin() {
 
         {/* Logo */}
         <Image
-          source={require("@/assets/images/icon.png")}
+          source={require("@/assets/images/hands_heart.png")}
           style={s.pinLogo}
           resizeMode="contain"
         />
@@ -100,21 +100,16 @@ export default function WelcomeScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const botPad = Platform.OS === "web" ? 34 : insets.bottom;
 
-  /* Double-tap guard — prevents rapid repeat taps on CTAs. Self-resets so
-     re-entering the screen (e.g. back from provider-register) re-enables taps. */
-  const lock = useRef(false);
-  const [busy, setBusy] = useState(false);
+  /* Double-tap guard — timestamp-based, no timer/lifecycle. Ignores a second
+     tap within 800ms of the first; naturally re-enables when the user returns. */
+  const lastTap = useRef(0);
 
   const go = useCallback((nav: () => void) => {
-    if (lock.current) return;
-    lock.current = true;
-    setBusy(true);
+    const now = Date.now();
+    if (now - lastTap.current < 800) return;
+    lastTap.current = now;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     nav();
-    setTimeout(() => {
-      lock.current = false;
-      setBusy(false);
-    }, 800);
   }, []);
 
   /* Shared animation values */
@@ -145,15 +140,6 @@ export default function WelcomeScreen() {
     /* Panel slides up last */
     panelOp.value  = withDelay(560, withTiming(1, { duration: 480, easing: ease }));
     panelTY.value  = withDelay(560, withSpring(0, { damping: 16, stiffness: 110 }));
-  }, []);
-
-  /* Auto-redirect fallback — navigate to login after 6s of inactivity */
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      router.replace("/auth/login");
-    }, 6000);
-
-    return () => clearTimeout(timer);
   }, []);
 
   const headerStyle = useAnimatedStyle(() => ({
@@ -196,7 +182,7 @@ export default function WelcomeScreen() {
             style={s.badge}
           >
             <Image
-              source={require("@/assets/images/icon.png")}
+              source={require("@/assets/images/hands_heart.png")}
               style={s.badgeLogo}
               resizeMode="contain"
             />
@@ -205,6 +191,12 @@ export default function WelcomeScreen() {
 
         <Text style={s.appName}>CuraVicino</Text>
         <Text style={s.slogan}>{t("appSlogan")}</Text>
+
+        {/* Reassuring trust message — calm, human-centered */}
+        <View style={s.trustRow}>
+          <Feather name="heart" size={12} color="#ffffff" />
+          <Text style={s.trustTxt}>{t("welcomeTrust")}</Text>
+        </View>
       </Animated.View>
 
       {/* ── Feature chips ── */}
@@ -244,7 +236,6 @@ export default function WelcomeScreen() {
         <TouchableOpacity
           style={s.btnGreen}
           onPress={() => go(() => router.push("/auth/login"))}
-          disabled={busy}
           activeOpacity={0.88}
         >
           <LinearGradient
@@ -263,7 +254,6 @@ export default function WelcomeScreen() {
         <TouchableOpacity
           style={s.btnOutline}
           onPress={() => go(() => router.push("/auth/provider-register"))}
-          disabled={busy}
           activeOpacity={0.88}
         >
           <Feather name="briefcase" size={19} color="#CE2B37" />
@@ -275,7 +265,6 @@ export default function WelcomeScreen() {
         <TouchableOpacity
           style={s.signinRow}
           onPress={() => go(() => router.push("/auth/login"))}
-          disabled={busy}
           activeOpacity={0.7}
         >
           <Text style={s.signinNote}>{t("haveAccount")} </Text>
@@ -330,6 +319,24 @@ const s = StyleSheet.create({
     textAlign: "center",
     lineHeight: 20,
     paddingHorizontal: 32,
+  },
+  trustRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    marginTop: 14,
+    backgroundColor: "rgba(255,255,255,0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.20)",
+    borderRadius: 22,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  trustTxt: {
+    fontSize: 12.5,
+    fontFamily: "Inter_500Medium",
+    color: "rgba(255,255,255,0.92)",
+    textAlign: "center",
   },
 
   /* Feature chips */

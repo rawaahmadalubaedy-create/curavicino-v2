@@ -33,3 +33,10 @@ description: Architecture decisions for the CuraVicino Expo React Native app (It
 ## Colors
 - Primary green: #009246, Red: #CE2B37, White: #FFFFFF
 - `useColors()` hook in `hooks/useColors.ts` — single source of truth for all theme tokens
+
+## i18n / LanguageContext gotcha
+- `t(key)` returns the **key string itself** when a translation is missing (not `undefined`/empty).
+
+**Why:** This makes the common `t(key) || fallback` pattern dead code — the fallback is unreachable because the key string is truthy, so a missing key renders as the literal raw key (e.g. `elderlyCarePill`) in the UI.
+
+**How to apply:** Every user-facing key must be defined in BOTH the `en` and `it` objects in `context/LanguageContext.tsx`. Do not rely on a JS `|| fallback`; add the actual key to both languages.

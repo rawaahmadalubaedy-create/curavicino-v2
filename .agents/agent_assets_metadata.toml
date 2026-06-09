@@ -24,3 +24,9 @@ id = "3EPkrS96wBClAaM2audWu"
 uri = "file://artifacts/mobile/assets/images/home_services.png"
 type = "image"
 title = "home services collage"
+
+[[generated]]
+id = "esmnuHktheVZQKqp_wq3N"
+uri = "file://artifacts/mobile/assets/images/hands_heart.png"
+type = "image"
+title = "hands forming heart logo"
