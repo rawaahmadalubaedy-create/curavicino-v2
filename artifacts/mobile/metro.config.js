@@ -14,10 +14,17 @@ const config = getDefaultConfig(projectRoot);
  * of honouring the "main": "expo-router/entry" field, which causes:
  *   "Unable to resolve module ../../App from AppEntry.js"
  *
- * Fix: tell Metro to watch the workspace root and search both the package-
- * local and the workspace-root node_modules trees.
+ * Fix: tell Metro to watch ONLY the workspace node_modules (not the entire
+ * workspace root). Watching the full workspace root caused Metro's
+ * FallbackWatcher to crash whenever the platform rotated a directory under
+ * .local/skills — an ENOENT on a path that was deleted mid-watch.
  */
-config.watchFolders = [workspaceRoot];
+config.watchFolders = [
+  // Only the pnpm virtual store — NOT workspaceRoot itself.
+  // Metro watches projectRoot (artifacts/mobile) by default; the workspace
+  // node_modules tree is the only additional path needed for symlink resolution.
+  path.resolve(workspaceRoot, "node_modules"),
+];
 
 config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, "node_modules"),
