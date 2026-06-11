@@ -203,11 +203,10 @@ export default function ProviderRegisterScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-<BasicInfo />
+  contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
+  showsVerticalScrollIndicator={false}
+  keyboardShouldPersistTaps="handled"
+>
         {/* ── STEP 2: Languages ── */}
         <View style={[styles.stepBadge, { backgroundColor: colors.red + "18", marginTop: 8 }]}>
           <Text style={[styles.stepBadgeText, { color: colors.red }]}>2 — {t("languagesSpoken")}</Text>
