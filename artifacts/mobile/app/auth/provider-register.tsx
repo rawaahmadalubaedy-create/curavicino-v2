@@ -1,5 +1,4 @@
 import { Feather } from "@expo/vector-icons";
-import BasicInfo from "@/components/provider/BasicInfo";
 import { shadow } from "@/utils/shadow";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
