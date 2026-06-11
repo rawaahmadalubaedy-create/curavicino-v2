@@ -1,4 +1,5 @@
-import { Feather } from "@expo/vector-icons";
+import { Feather } from
+  "@expo/vector-icons";
 import { shadow } from "@/utils/shadow";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
@@ -203,11 +204,203 @@ export default function ProviderRegisterScreen() {
       </View>
 
       <ScrollView
-  contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
-  showsVerticalScrollIndicator={false}
-  keyboardShouldPersistTaps="handled"
->
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* ── STEP 1: Basic Info ── */}
+          {/* ── STEP 2: Languages ── */}
+        <View style={[styles.stepBadge, { backgroundColor: colors.red + "18", marginTop: 8 }]}>
+          <Text style={[styles.stepBadgeText, { color: colors.red }]}>2 — {t("languagesSpoken")}</Text>
+        </View>
+        <View style={styles.chipRow}>
+          {LANGUAGES.map((lang) => {
+            const active = selectedLanguages.includes(lang);
+            return (
+              <TouchableOpacity
+                key={lang}
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor: active ? colors.red : colors.surface,
+                    borderColor: active ? colors.red : colors.border,
+                  },
+                ]}
+                onPress={() => toggleItem(selectedLanguages, lang, setSelectedLanguages)}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.chipText, { color: active ? "#fff" : colors.darkText }]}>{lang}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* ── STEP 3: Service Categories ── */}
+        <View style={[styles.stepBadge, { backgroundColor: colors.red + "18", marginTop: 8 }]}>
+          <Text style={[styles.stepBadgeText, { color: colors.red }]}>3 — {t("serviceCategories")}</Text>
+        </View>
+        <Text style={[styles.helperText, { color: colors.subText }]}>{t("selectAllThatApply")}</Text>
+        {SERVICE_CATEGORIES.map((cat) => {
+          const active = selectedCategories.includes(cat.id);
+          return (
+            <TouchableOpacity
+              key={cat.id}
+              style={[
+                styles.categoryCard,
+                {
+                  borderColor: active ? colors.red : colors.border,
+                  backgroundColor: active ? colors.red + "12" : colors.surface,
+                },
+              ]}
+              onPress={() => toggleItem(selectedCategories, cat.id, setSelectedCategories)}
+              activeOpacity={0.85}
+            >
+              <View style={[styles.catIconBox, { backgroundColor: active ? colors.red : colors.muted }]}>
+                <Feather name={cat.icon as any} size={20} color={active ? "#fff" : colors.subText} />
+              </View>
+              <Text style={[styles.catLabel, { color: active ? colors.red : colors.darkText }]}>
+                {cat.label}
+              </Text>
+              {active && <Feather name="check-circle" size={20} color={colors.red} />}
+            </TouchableOpacity>
+          );
+        })}
+
+        {/* ── STEP 4: Availability ── */}
+        <View style={[styles.stepBadge, { backgroundColor: colors.red + "18", marginTop: 8 }]}>
+          <Text style={[styles.stepBadgeText, { color: colors.red }]}>4 — {t("availabilitySetup")}</Text>
+        </View>
+
+        <View style={[styles.availRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <View style={styles.availRowLeft}>
+            <View style={[styles.availDot, { backgroundColor: isOnline ? "#009246" : "#999" }]} />
+            <Text style={[styles.availLabel, { color: colors.darkText }]}>
+              {isOnline ? t("availableOnline") : t("setOffline")}
+            </Text>
+          </View>
+          <Switch
+            value={isOnline}
+            onValueChange={setIsOnline}
+            trackColor={{ false: "#ccc", true: colors.primary + "88" }}
+            thumbColor={isOnline ? colors.primary : "#f0f0f0"}
+          />
+        </View>
+
+        <Text style={[styles.subLabel, { color: colors.darkText }]}>{t("workingDays")}</Text>
+        <View style={styles.daysRow}>
+          {DAYS.map((day) => {
+            const active = workingDays.includes(day);
+            return (
+              <TouchableOpacity
+                key={day}
+                style={[
+                  styles.dayBtn,
+                  {
+                    backgroundColor: active ? colors.primary : colors.surface,
+                    borderColor: active ? colors.primary : colors.border,
+                  },
+                ]}
+                onPress={() => toggleItem(workingDays, day, setWorkingDays)}
+              >
+                <Text style={[styles.dayTxt, { color: active ? "#fff" : colors.subText }]}>{day}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        <Text style={[styles.subLabel, { color: colors.darkText }]}>{t("workingHours")}</Text>
+        <View style={styles.hoursRow}>
+          <View style={styles.hourBlock}>
+            <Text style={[styles.hourLabel, { color: colors.subText }]}>{t("from")}</Text>
+            <View style={[styles.hourInput, { borderColor: colors.border, backgroundColor: colors.surface }]}>
+              <Feather name="clock" size={16} color={colors.primary} />
+              <TextInput
+                style={[styles.hourText, { color: colors.darkText }]}
+                value={hoursFrom}
+                onChangeText={setHoursFrom}
+                placeholder="08:00"
+                placeholderTextColor={colors.mutedForeground}
+                keyboardType="numbers-and-punctuation"
+              />
+            </View>
+          </View>
+          <Feather name="arrow-right" size={18} color={colors.subText} style={styles.arrowIcon} />
+          <View style={styles.hourBlock}>
+            <Text style={[styles.hourLabel, { color: colors.subText }]}>{t("to")}</Text>
+            <View style={[styles.hourInput, { borderColor: colors.border, backgroundColor: colors.surface }]}>
+              <Feather name="clock" size={16} color={colors.primary} />
+              <TextInput
+                style={[styles.hourText, { color: colors.darkText }]}
+                value={hoursTo}
+                onChangeText={setHoursTo}
+                placeholder="18:00"
+                placeholderTextColor={colors.mutedForeground}
+                keyboardType="numbers-and-punctuation"
+              />
+            </View>
+          </View>
+        </View>
+
+        {/* ── STEP 5: Documents ── */}
+        <View style={[styles.stepBadge, { backgroundColor: colors.red + "18", marginTop: 8 }]}>
+          <Text style={[styles.stepBadgeText, { color: colors.red }]}>5 — {t("verificationDocs")}</Text>
+        </View>
+
+        <UploadRow
+          label={t("uploadId")}
+          icon="credit-card"
+          uploaded={uploads.id}
+          onUpload={() => handleUpload("id")}
+        />
+        <UploadRow
+          label={t("uploadMedical")}
+          icon="activity"
+          uploaded={uploads.medical}
+          onUpload={() => handleUpload("medical")}
+        />
+        <UploadRow
+          label={t("uploadCriminal")}
+          icon="shield"
+          uploaded={uploads.criminal}
+          onUpload={() => handleUpload("criminal")}
+        />
+        <UploadRow
+          label={t("uploadPhoto")}
+          icon="camera"
+          uploaded={uploads.photo}
+          onUpload={() => handleUpload("photo")}
+        />
+
+        {/* Banking */}
+        <Text style={[styles.subLabel, { color: colors.darkText }]}>{t("linkBanking")}</Text>
+        <TouchableOpacity
+          style={[styles.bankingBtn, { borderColor: colors.primary, backgroundColor: colors.lightGreen }]}
+          activeOpacity={0.8}
         >
+          <Feather name="credit-card" size={20} color={colors.primary} />
+          <Text style={[styles.bankingBtnText, { color: colors.primary }]}>{t("linkBanking")}</Text>
+          <Feather name="chevron-right" size={18} color={colors.primary} />
+        </TouchableOpacity>
+
+        {/* Withdrawal preference */}
+        <Text style={[styles.subLabel, { color: colors.darkText }]}>{t("withdrawal")}</Text>
+        <View style={styles.withdrawalRow}>
+          {(["daily", "weekly", "monthly"] as Withdrawal[]).map((opt) => (
+            <TouchableOpacity
+              key={opt}
+              style={[
+                styles.withdrawalBtn,
+                {
+                  backgroundColor: withdrawal === opt ? colors.primary : colors.surface,
+                  borderColor: withdrawal === opt ? colors.primary : colors.border,
+                },
+              ]}
+              onPress={() => setWithdrawal(opt)}
+            >
+              <Text style={[styles.withdrawalTxt, { color: withdrawal === opt ? "#fff" : colors.subText }]}>
+                {t(opt)}
+              </Text>
+            </TouchableOpacity>
           ))}
         </View>
 
