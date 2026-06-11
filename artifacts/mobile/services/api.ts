@@ -131,4 +131,3 @@ export async function apiFetch<T = unknown>(
 
   return res.json() as Promise<T>;
 }
-export const api; }
