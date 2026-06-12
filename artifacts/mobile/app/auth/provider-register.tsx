@@ -22,16 +22,12 @@ import { useLang } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
 import BasicInfo from "@/components/provider/BasicInfo";
 import { styles } from "@/styles/providerRegister.styles";
-type Withdrawal = "daily" | "weekly" | "monthly";
-
-const LANGUAGES = ["Italian", "English", "French", "German", "Spanish", "Arabic"];
-const SERVICE_CATEGORIES = [
-  { id: "elderly-care", label: "Medical Care", icon: "activity" },
-  { id: "delivery", label: "Delivery & Shopping", icon: "package" },
-  { id: "home-services", label: "Home Services", icon: "home" },
-];
-const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
- 
+import {
+  Withdrawal,
+  LANGUAGES,
+  SERVICE_CATEGORIES,
+  DAYS,
+} from "@/constants/providerRegister.constants";
 export default function ProviderRegisterScreen() {
   const colors = useColors();
   const { t } = useLang();
