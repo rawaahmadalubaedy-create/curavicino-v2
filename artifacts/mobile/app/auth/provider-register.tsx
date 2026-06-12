@@ -9,7 +9,6 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
-  StyleSheet,
   Switch,
   Text,
   TextInput,
@@ -22,6 +21,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useLang } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
 import BasicInfo from "@/components/provider/BasicInfo";
+import { styles } from "@/styles/providerRegister.styles";
 type Withdrawal = "daily" | "weekly" | "monthly";
 
 const LANGUAGES = ["Italian", "English", "French", "German", "Spanish", "Arabic"];
