@@ -1,3 +1,17 @@
+import React from "react";
+import { View, Text, TouchableOpacity } from "react-native";
+import { LANGUAGES } from "@/constants/providerRegister.constants";
+
+export default function LanguagesSection({
+  styles,
+  colors,
+  t,
+  selectedLanguages,
+  setSelectedLanguages,
+  toggleItem,
+}: any) {
+  return (
+    <>
 {/* ── STEP 2: Languages ── */}
 <View style={[styles.stepBadge, { backgroundColor: colors.red + "18", marginTop: 8 }]}>
   <Text style={[styles.stepBadgeText, { color: colors.red }]}>
@@ -36,3 +50,6 @@
     );
   })}
 </View>
+</>
+  );
+} 

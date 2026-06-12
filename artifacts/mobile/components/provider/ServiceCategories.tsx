@@ -1,4 +1,19 @@
-        {/* ── STEP 3: Service Categories ── */}
+import React from "react";
+import { View, Text, TouchableOpacity } from "react-native";
+import { Feather } from "@expo/vector-icons";
+import { SERVICE_CATEGORIES } from "@/constants/providerRegister.constants";
+
+export default function ServiceCategories({
+  styles,
+  colors,
+  t,
+  selectedCategories,
+  setSelectedCategories,
+  toggleItem,
+}: any) {
+  return (
+    <>
+{/* ── STEP 3: Service Categories ── */}
         <View style={[styles.stepBadge, { backgroundColor: colors.red + "18", marginTop: 8 }]}>
           <Text style={[styles.stepBadgeText, { color: colors.red }]}>3 — {t("serviceCategories")}</Text>
         </View>
@@ -28,3 +43,6 @@
             </TouchableOpacity>
           );
         })}
+      </>
+  );
+}

@@ -1,3 +1,30 @@
+import React from "react";
+import {
+  View,
+  Text,
+  Switch,
+  TouchableOpacity,
+  TextInput,
+} from "react-native";
+import { Feather } from "@expo/vector-icons";
+
+export default function Availability({
+  styles,
+  colors,
+  t,
+  isOnline,
+  setIsOnline,
+  workingDays,
+  setWorkingDays,
+  hoursFrom,
+  setHoursFrom,
+  hoursTo,
+  setHoursTo,
+  toggleItem,
+  DAYS,
+}: any) {
+  return (
+    <>
 {/* ── STEP 4: Availability ── */}
 <View style={[styles.stepBadge, { backgroundColor: colors.red + "18", marginTop: 8 }]}>
   <Text style={[styles.stepBadgeText, { color: colors.red }]}>4 — {t("availabilitySetup")}</Text>
@@ -20,7 +47,7 @@
 
 <Text style={[styles.subLabel, { color: colors.darkText }]}>{t("workingDays")}</Text>
 <View style={styles.daysRow}>
-  {DAYS.map((day) => {
+  {DAYS.map((day: any) => {
     const active = workingDays.includes(day);
     return (
       <TouchableOpacity
@@ -72,3 +99,6 @@
     </View>
   </View>
 </View>
+</>
+  );
+}

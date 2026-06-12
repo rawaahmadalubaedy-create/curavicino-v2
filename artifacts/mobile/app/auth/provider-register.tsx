@@ -117,8 +117,22 @@ export default function ProviderRegisterScreen() {
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      ><BasicInfo />
+        keyboardShouldPersistTaps="handled">
+      <BasicInfo
+  styles={styles}
+  colors={colors}
+  t={t}
+  fullName={fullName}
+  setFullName={setFullName}
+  age={age}
+  setAge={setAge}
+  phone={phone}
+  setPhone={setPhone}
+  email={email}
+  setEmail={setEmail}
+  address={address}
+  setAddress={setAddress}
+/>
            {/* Submit */}
         <TouchableOpacity
           style={[styles.submitBtn, { backgroundColor: colors.red }, loading && styles.disabled]}

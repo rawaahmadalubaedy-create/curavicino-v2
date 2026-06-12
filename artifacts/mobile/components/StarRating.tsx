@@ -26,7 +26,7 @@ export function StarRating({ rating, size = 18, interactive = false, onRate }: P
             hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
           >
             <AntDesign
-              name={filled ? "star" : "staro"}
+              name={filled ? "star" : "star"}
               size={size}
               color={filled ? STAR_FILLED : STAR_EMPTY}
               style={styles.star}
