@@ -118,7 +118,7 @@ export default function ProviderRegisterScreen() {
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled">
-      <BasicInfo
+      <BasicInfo     
   styles={styles}
   colors={colors}
   t={t}
