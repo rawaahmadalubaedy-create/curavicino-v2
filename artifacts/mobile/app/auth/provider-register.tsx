@@ -1,6 +1,4 @@
-import { Feather } from
-  "@expo/vector-icons";
-import { shadow } from "@/utils/shadow";
+import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
@@ -9,25 +7,23 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
-  Switch,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
 import { useAuth } from "@/context/AuthContext";
 import { useLang } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
 import BasicInfo from "@/components/provider/BasicInfo";
+import Availability from "@/components/provider/Availability";
+import BankingSection from "@/components/provider/BankingSection";
+import Documents from "@/components/provider/Documents";
+import LanguagesSection from "@/components/provider/LanguagesSection";
+import ServiceCategories from "@/components/provider/ServiceCategories";
+import WithdrawalSection from "@/components/provider/WithdrawalSection";
 import { styles } from "@/styles/providerRegister.styles";
-import {
-  Withdrawal,
-  LANGUAGES,
-  SERVICE_CATEGORIES,
-  DAYS,
-} from "@/constants/providerRegister.constants";
+import { Withdrawal, DAYS } from "@/constants/providerRegister.constants";
 export default function ProviderRegisterScreen() {
   const colors = useColors();
   const { t } = useLang();
@@ -40,10 +36,18 @@ export default function ProviderRegisterScreen() {
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
 
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(["Italian"]);
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([
+    "Italian",
+  ]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  const [workingDays, setWorkingDays] = useState<string[]>(["Mon", "Tue", "Wed", "Thu", "Fri"]);
+  const [workingDays, setWorkingDays] = useState<string[]>([
+    "Mon",
+    "Tue",
+    "Wed",
+    "Thu",
+    "Fri",
+  ]);
   const [hoursFrom, setHoursFrom] = useState("08:00");
   const [hoursTo, setHoursTo] = useState("18:00");
   const [isOnline, setIsOnline] = useState(true);
@@ -57,7 +61,11 @@ export default function ProviderRegisterScreen() {
   const [withdrawal, setWithdrawal] = useState<Withdrawal>("weekly");
   const [loading, setLoading] = useState(false);
 
-  const toggleItem = (arr: string[], item: string, setArr: (v: string[]) => void) => {
+  const toggleItem = (
+    arr: string[],
+    item: string,
+    setArr: (v: string[]) => void,
+  ) => {
     setArr(arr.includes(item) ? arr.filter((i) => i !== item) : [...arr, item]);
   };
 
@@ -106,7 +114,12 @@ export default function ProviderRegisterScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { paddingTop: insets.top + 12, backgroundColor: colors.red }]}>
+      <View
+        style={[
+          styles.header,
+          { paddingTop: insets.top + 12, backgroundColor: colors.red },
+        ]}
+      >
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Feather name="arrow-left" size={22} color="#ffffff" />
         </TouchableOpacity>
@@ -115,27 +128,81 @@ export default function ProviderRegisterScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
+        contentContainerStyle={[
+          styles.scroll,
+          { paddingBottom: insets.bottom + 32 },
+        ]}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled">
-      <BasicInfo     
-  styles={styles}
-  colors={colors}
-  t={t}
-  fullName={fullName}
-  setFullName={setFullName}
-  age={age}
-  setAge={setAge}
-  phone={phone}
-  setPhone={setPhone}
-  email={email}
-  setEmail={setEmail}
-  address={address}
-  setAddress={setAddress}
-/>
-           {/* Submit */}
+        keyboardShouldPersistTaps="handled"
+      >
+        <BasicInfo
+          styles={styles}
+          colors={colors}
+          t={t}
+          fullName={fullName}
+          setFullName={setFullName}
+          age={age}
+          setAge={setAge}
+          phone={phone}
+          setPhone={setPhone}
+          email={email}
+          setEmail={setEmail}
+          address={address}
+          setAddress={setAddress}
+        />
+        <LanguagesSection
+          styles={styles}
+          colors={colors}
+          t={t}
+          selectedLanguages={selectedLanguages}
+          setSelectedLanguages={setSelectedLanguages}
+          toggleItem={toggleItem}
+        />
+        <ServiceCategories
+          styles={styles}
+          colors={colors}
+          t={t}
+          selectedCategories={selectedCategories}
+          setSelectedCategories={setSelectedCategories}
+          toggleItem={toggleItem}
+        />
+        <Availability
+          styles={styles}
+          colors={colors}
+          t={t}
+          isOnline={isOnline}
+          setIsOnline={setIsOnline}
+          workingDays={workingDays}
+          setWorkingDays={setWorkingDays}
+          hoursFrom={hoursFrom}
+          setHoursFrom={setHoursFrom}
+          hoursTo={hoursTo}
+          setHoursTo={setHoursTo}
+          toggleItem={toggleItem}
+          DAYS={DAYS}
+        />
+        <Documents
+          styles={styles}
+          colors={colors}
+          t={t}
+          uploads={uploads}
+          handleUpload={handleUpload}
+        />
+        <WithdrawalSection
+          styles={styles}
+          colors={colors}
+          t={t}
+          withdrawal={withdrawal}
+          setWithdrawal={setWithdrawal}
+        />
+        <BankingSection styles={styles} colors={colors} t={t} />
+        {/* Submit */}
         <TouchableOpacity
-          style={[styles.submitBtn, { backgroundColor: colors.red }, loading && styles.disabled]}
+          style={[
+            styles.submitBtn,
+            { backgroundColor: colors.red },
+            loading && styles.disabled,
+          ]}
           onPress={handleRegister}
           disabled={loading}
           activeOpacity={0.85}
@@ -150,4 +217,3 @@ export default function ProviderRegisterScreen() {
     </View>
   );
 }
-
